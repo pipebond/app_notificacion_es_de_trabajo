@@ -6,7 +6,14 @@ const pool = require("./db/pool");
 const PORT = Number(process.env.PORT || 4000);
 
 function validateEnvironment() {
-  const required = ["DB_HOST", "DB_PORT", "DB_USER", "DB_NAME", "API_KEY"];
+  const hasDbUrl = Boolean(
+    process.env.DB_URL || process.env.MYSQL_PUBLIC_URL || process.env.MYSQL_URL,
+  );
+
+  const required = hasDbUrl
+    ? ["API_KEY"]
+    : ["DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME", "API_KEY"];
+
   const missing = required.filter((key) => !process.env[key]);
 
   if (missing.length) {

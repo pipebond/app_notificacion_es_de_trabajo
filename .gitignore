@@ -48,3 +48,4 @@ app.*.map.json
 backend/.env
 backend/node_modules/
 backend/uploads/
+.vercel
