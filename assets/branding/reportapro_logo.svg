@@ -1,0 +1,39 @@
+<svg width="1200" height="1200" viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="120" x2="1080" y2="1080" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF2E7"/>
+      <stop offset="1" stop-color="#E8FFF8"/>
+    </linearGradient>
+    <linearGradient id="card" x1="326" y1="230" x2="872" y2="930" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF7A3D"/>
+      <stop offset="1" stop-color="#FF5A36"/>
+    </linearGradient>
+    <linearGradient id="check" x1="456" y1="560" x2="739" y2="698" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F4FAFF"/>
+    </linearGradient>
+    <filter id="shadow" x="262" y="200" width="676" height="786" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="20"/>
+      <feGaussianBlur stdDeviation="24"/>
+      <feComposite in2="hardAlpha" operator="out"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.984314 0 0 0 0 0.352941 0 0 0 0 0.211765 0 0 0 0.24 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect x="80" y="80" width="1040" height="1040" rx="220" fill="url(#bg)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="320" y="240" width="560" height="680" rx="92" fill="url(#card)"/>
+    <rect x="438" y="194" width="324" height="86" rx="43" fill="#12A18F"/>
+    <rect x="406" y="376" width="388" height="24" rx="12" fill="#FFD8BF"/>
+    <rect x="406" y="432" width="326" height="24" rx="12" fill="#FFD8BF"/>
+    <rect x="406" y="488" width="270" height="24" rx="12" fill="#FFD8BF"/>
+    <path d="M442 625L520 703L732 493" stroke="url(#check)" stroke-width="68" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <text x="600" y="1030" text-anchor="middle" font-size="92" font-family="Poppins, Sora, Montserrat, sans-serif" font-weight="800" fill="#22303A">ReportaPro</text>
+</svg>
