@@ -12,12 +12,13 @@ const resolvedCa = sslCaContent
     ? fs.readFileSync(sslCaPath, "utf8")
     : undefined;
 
-const sslConfig = sslEnabled || resolvedCa
-  ? {
-      ...(resolvedCa ? { ca: resolvedCa } : {}),
-      rejectUnauthorized,
-    }
-  : undefined;
+const sslConfig =
+  sslEnabled || resolvedCa
+    ? {
+        ...(resolvedCa ? { ca: resolvedCa } : {}),
+        rejectUnauthorized,
+      }
+    : undefined;
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || "127.0.0.1",

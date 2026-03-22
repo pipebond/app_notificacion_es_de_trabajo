@@ -16,7 +16,9 @@ function validateEnvironment() {
 
   const isProduction = process.env.NODE_ENV === "production";
   const sslEnabled = process.env.DB_SSL === "true";
-  const hasSslCa = Boolean(process.env.DB_SSL_CA || process.env.DB_SSL_CA_CONTENT);
+  const hasSslCa = Boolean(
+    process.env.DB_SSL_CA || process.env.DB_SSL_CA_CONTENT,
+  );
   const rejectUnauthorized = process.env.DB_SSL_REJECT_UNAUTHORIZED !== "false";
 
   if (isProduction && sslEnabled && !hasSslCa && rejectUnauthorized) {
