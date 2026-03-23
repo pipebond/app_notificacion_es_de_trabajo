@@ -16,9 +16,20 @@ if [ -z "${API_KEY:-}" ]; then
   exit 1
 fi
 
+clean_api_base_url="$(printf '%s' "${API_BASE_URL}" | tr -d '\r\n')"
+clean_api_key="$(printf '%s' "${API_KEY}" | tr -d '\r\n')"
+
+if [ -z "${clean_api_base_url}" ]; then
+  echo "ERROR: API_BASE_URL quedo vacio despues de limpiar saltos de linea."
+  exit 1
+fi
+
+if [ -z "${clean_api_key}" ]; then
+  echo "ERROR: API_KEY quedo vacio despues de limpiar saltos de linea."
+  exit 1
+fi
+
 flutter --version
 flutter config --enable-web
 flutter pub get
-flutter build web --release \
-  --dart-define=API_BASE_URL="${API_BASE_URL}" \
-  --dart-define=API_KEY="${API_KEY}"
+flutter build web --release --dart-define=API_BASE_URL="${clean_api_base_url}" --dart-define=API_KEY="${clean_api_key}"
