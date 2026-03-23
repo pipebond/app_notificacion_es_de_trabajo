@@ -165,22 +165,21 @@ class BackendApi {
     };
   }
 
-  Future<Map<String, dynamic>> _parseJson(http.Response response) async {
-    final dynamic body =
-        response.body.isNotEmpty
-            ? jsonDecode(response.body)
-            : <String, dynamic>{};
-
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      if (body is Map<String, dynamic>) {
-        return body;
-      }
-      return <String, dynamic>{'data': body};
+  dynamic _decodeBody(http.Response response) {
+    if (response.body.isEmpty) {
+      return <String, dynamic>{};
     }
 
-    String message = 'Error de servidor';
+    try {
+      return jsonDecode(response.body);
+    } on FormatException {
+      return response.body;
+    }
+  }
+
+  String _buildResponseErrorMessage(http.Response response, dynamic body) {
     if (body is Map<String, dynamic> && body['message'] is String) {
-      message = body['message'] as String;
+      var message = body['message'] as String;
 
       if (body['errors'] is List && (body['errors'] as List).isNotEmpty) {
         final dynamic firstError = (body['errors'] as List).first;
@@ -192,7 +191,45 @@ class BackendApi {
           }
         }
       }
+
+      return message;
     }
+
+    if (body is String) {
+      final normalized = body.replaceAll(RegExp(r'\s+'), ' ').trim();
+      if (normalized.isEmpty) {
+        return 'Respuesta vacia del servidor';
+      }
+
+      final preview =
+          normalized.length > 160
+              ? '${normalized.substring(0, 160)}...'
+              : normalized;
+
+      return 'Respuesta no JSON del servidor: $preview';
+    }
+
+    return 'Error de servidor';
+  }
+
+  Future<Map<String, dynamic>> _parseJson(http.Response response) async {
+    final dynamic body = _decodeBody(response);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (body is Map<String, dynamic>) {
+        return body;
+      }
+
+      if (body is String) {
+        throw Exception(
+          'HTTP ${response.statusCode}: respuesta inesperada del servidor',
+        );
+      }
+
+      return <String, dynamic>{'data': body};
+    }
+
+    final message = _buildResponseErrorMessage(response, body);
 
     throw Exception('HTTP ${response.statusCode}: $message');
   }
@@ -265,9 +302,11 @@ class BackendApi {
       headers: _headers(),
     );
 
-    final dynamic body = jsonDecode(response.body);
+    final dynamic body = _decodeBody(response);
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('HTTP ${response.statusCode}: error listando empleados');
+      throw Exception(
+        'HTTP ${response.statusCode}: ${_buildResponseErrorMessage(response, body)}',
+      );
     }
     if (body is! List) {
       return <EmployeeRecord>[];
@@ -377,9 +416,11 @@ class BackendApi {
       headers: _headers(),
     );
 
-    final dynamic body = jsonDecode(response.body);
+    final dynamic body = _decodeBody(response);
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('HTTP ${response.statusCode}: error listando reportes');
+      throw Exception(
+        'HTTP ${response.statusCode}: ${_buildResponseErrorMessage(response, body)}',
+      );
     }
     if (body is! List) {
       return <DailyReport>[];
