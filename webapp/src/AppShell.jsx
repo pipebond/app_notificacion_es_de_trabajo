@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState } from "react";
 import "./app-shell.css";
 
-const defaultApiBaseUrl = "https://reportapro-backend.onrender.com/api";
+const defaultApiBaseUrl = "http://localhost:4000/api";
 const apiBaseUrl = (
   import.meta.env.VITE_API_BASE_URL || defaultApiBaseUrl
 ).replace(/\/$/, "");
@@ -85,7 +85,11 @@ async function parseResponse(response) {
 }
 
 function buildErrorMessage(payload, fallback) {
-  if (payload && typeof payload === "object" && typeof payload.message === "string") {
+  if (
+    payload &&
+    typeof payload === "object" &&
+    typeof payload.message === "string"
+  ) {
     return payload.message;
   }
 
@@ -98,7 +102,9 @@ function buildErrorMessage(payload, fallback) {
 
 async function apiRequest(path, options = {}) {
   if (!apiKey) {
-    throw new Error("Falta configurar VITE_API_KEY para proteger el acceso web.");
+    throw new Error(
+      "Falta configurar VITE_API_KEY para proteger el acceso web.",
+    );
   }
 
   const isFormData = options.body instanceof FormData;
@@ -191,9 +197,14 @@ export default function AppShell() {
   const [activeUser, setActiveUser] = useState(null);
   const [status, setStatus] = useState({ type: "idle", message: "" });
   const [loading, setLoading] = useState(false);
-  const [loginForm, setLoginForm] = useState({ email: "", password: "", role: "" });
+  const [loginForm, setLoginForm] = useState({
+    email: "",
+    password: "",
+    role: "",
+  });
   const [registerForm, setRegisterForm] = useState(initialRegisterForm);
-  const [dataAuthorizationChecked, setDataAuthorizationChecked] = useState(false);
+  const [dataAuthorizationChecked, setDataAuthorizationChecked] =
+    useState(false);
   const [bossProfile, setBossProfile] = useState(emptyBossProfile);
   const [bossId, setBossId] = useState(null);
   const [employees, setEmployees] = useState([]);
@@ -205,8 +216,12 @@ export default function AppShell() {
 
   useEffect(() => {
     const storedSession = parseStoredJson(SESSION_STORAGE_KEY, null);
-    const storedBossProfile = parseStoredJson(BOSS_PROFILE_STORAGE_KEY, emptyBossProfile);
-    const storedBossId = Number(localStorage.getItem(BOSS_ID_STORAGE_KEY) || 0) || null;
+    const storedBossProfile = parseStoredJson(
+      BOSS_PROFILE_STORAGE_KEY,
+      emptyBossProfile,
+    );
+    const storedBossId =
+      Number(localStorage.getItem(BOSS_ID_STORAGE_KEY) || 0) || null;
 
     if (storedSession?.token && storedSession?.user) {
       setSessionToken(storedSession.token);
@@ -287,12 +302,13 @@ export default function AppShell() {
 
     setLoading(true);
     try {
-      const [sessionResult, remoteProfile, remoteEmployees, remoteReports] = await Promise.all([
-        api.getSession(sessionToken),
-        api.getBoss(activeUser.bossId),
-        api.listEmployees(activeUser.bossId),
-        api.listReports(activeUser.bossId),
-      ]);
+      const [sessionResult, remoteProfile, remoteEmployees, remoteReports] =
+        await Promise.all([
+          api.getSession(sessionToken),
+          api.getBoss(activeUser.bossId),
+          api.listEmployees(activeUser.bossId),
+          api.listReports(activeUser.bossId),
+        ]);
 
       setActiveUser(sessionResult.user);
       setBossId(activeUser.bossId);
@@ -314,11 +330,13 @@ export default function AppShell() {
 
     setLoading(true);
     try {
-      const [remoteProfile, remoteEmployees, remoteReports] = await Promise.all([
-        api.getBoss(activeUser.bossId),
-        api.listEmployees(activeUser.bossId),
-        api.listReports(activeUser.bossId),
-      ]);
+      const [remoteProfile, remoteEmployees, remoteReports] = await Promise.all(
+        [
+          api.getBoss(activeUser.bossId),
+          api.listEmployees(activeUser.bossId),
+          api.listReports(activeUser.bossId),
+        ],
+      );
 
       setBossId(activeUser.bossId);
       setBossProfile(normalizeBossProfile(remoteProfile));
@@ -344,10 +362,16 @@ export default function AppShell() {
       dataAuthorized: dataAuthorizationChecked,
     };
 
-    if (!payload.fullName || !payload.email || payload.password.length < 6 || !payload.dataAuthorized) {
+    if (
+      !payload.fullName ||
+      !payload.email ||
+      payload.password.length < 6 ||
+      !payload.dataAuthorized
+    ) {
       setStatus({
         type: "error",
-        message: "Completa datos basicos, clave minima de 6 caracteres y autorizacion de datos.",
+        message:
+          "Completa datos basicos, clave minima de 6 caracteres y autorizacion de datos.",
       });
       return;
     }
@@ -359,7 +383,10 @@ export default function AppShell() {
       setDataAuthorizationChecked(false);
       setAuthMode("login");
       setLoginForm({ email: payload.email, password: "", role: payload.role });
-      setStatus({ type: "success", message: "Registro exitoso. Ahora inicia sesion." });
+      setStatus({
+        type: "success",
+        message: "Registro exitoso. Ahora inicia sesion.",
+      });
     } catch (error) {
       showError(error, "No fue posible completar el registro.");
     } finally {
@@ -446,10 +473,16 @@ export default function AppShell() {
       notes: bossProfile.notes.trim(),
     };
 
-    if (!payload.name || !payload.companyName || !payload.accessCode || !payload.position) {
+    if (
+      !payload.name ||
+      !payload.companyName ||
+      !payload.accessCode ||
+      !payload.position
+    ) {
       setStatus({
         type: "error",
-        message: "Completa nombre, empresa, ID de empresa y cargo del responsable.",
+        message:
+          "Completa nombre, empresa, ID de empresa y cargo del responsable.",
       });
       return;
     }
@@ -472,7 +505,11 @@ export default function AppShell() {
       await refreshRemoteDataByBoss(resolvedBossId);
       setActiveUser((current) =>
         current
-          ? { ...current, bossId: resolvedBossId, companyName: payload.companyName }
+          ? {
+              ...current,
+              bossId: resolvedBossId,
+              companyName: payload.companyName,
+            }
           : current,
       );
       setStatus({
@@ -492,7 +529,8 @@ export default function AppShell() {
     if (!bossId) {
       setStatus({
         type: "error",
-        message: "Primero debe existir un jefe registrado para sincronizar reportes.",
+        message:
+          "Primero debe existir un jefe registrado para sincronizar reportes.",
       });
       return;
     }
@@ -505,7 +543,11 @@ export default function AppShell() {
       observations: employeeForm.observations.trim(),
     };
 
-    if (!payload.fullName || !payload.idNumber || payload.observations.length < 3) {
+    if (
+      !payload.fullName ||
+      !payload.idNumber ||
+      payload.observations.length < 3
+    ) {
       setStatus({
         type: "error",
         message: "Completa nombre, identificacion y observaciones del reporte.",
@@ -542,7 +584,9 @@ export default function AppShell() {
       let imageUrls = [];
       if (selectedFiles.length) {
         const uploadResult = await api.uploadImages(selectedFiles);
-        imageUrls = Array.isArray(uploadResult?.imageUrls) ? uploadResult.imageUrls : [];
+        imageUrls = Array.isArray(uploadResult?.imageUrls)
+          ? uploadResult.imageUrls
+          : [];
       }
 
       await api.createReport({
@@ -556,7 +600,10 @@ export default function AppShell() {
       setReports(Array.isArray(remoteReports) ? remoteReports : []);
       setEmployeeForm(initialEmployeeForm);
       setSelectedFiles([]);
-      setStatus({ type: "success", message: "Reporte enviado y sincronizado correctamente." });
+      setStatus({
+        type: "success",
+        message: "Reporte enviado y sincronizado correctamente.",
+      });
     } catch (error) {
       showError(error, "No fue posible enviar el reporte del empleado.");
     } finally {
@@ -574,9 +621,15 @@ export default function AppShell() {
 
       <header className="topbar">
         <div className="brand-lockup">
-          <img className="brand-icon" src="/reportapro-icon.svg" alt="Icono de ReportaPro" />
+          <img
+            className="brand-icon"
+            src="/reportapro-icon.svg"
+            alt="Icono de ReportaPro"
+          />
           <div>
-            <p className="eyebrow">Control diario de personal y reportes operativos</p>
+            <p className="eyebrow">
+              Control diario de personal y reportes operativos
+            </p>
             <h1>ReportaPro</h1>
           </div>
         </div>
@@ -693,7 +746,8 @@ function AuthScreen({
           <span className="badge">Autenticacion real en backend</span>
           <h2>Controla personal, reportes y evidencia desde una web agil.</h2>
           <p>
-            El acceso ahora usa registro e inicio de sesion reales sobre backend con hash de contrasenas y token de sesion.
+            El acceso ahora usa registro e inicio de sesion reales sobre backend
+            con hash de contrasenas y token de sesion.
           </p>
           <ul className="highlight-list">
             {highlights.map((item) => (
@@ -703,11 +757,16 @@ function AuthScreen({
         </div>
 
         <aside className="hero-card auth-card">
-          <img className="hero-logo" src="/reportapro-horizontal.svg" alt="Logo horizontal de ReportaPro" />
+          <img
+            className="hero-logo"
+            src="/reportapro-horizontal.svg"
+            alt="Logo horizontal de ReportaPro"
+          />
           <p className="hero-kicker">Slogan principal</p>
           <h3>Reportes diarios claros. Equipos alineados. Evidencia lista.</h3>
           <p>
-            Software para control de personal, seguimiento operativo y reportes de campo con flujo seguro en la web.
+            Software para control de personal, seguimiento operativo y reportes
+            de campo con flujo seguro en la web.
           </p>
           <div className="stat-grid two-cols">
             <article className="stat-card">
@@ -725,55 +784,120 @@ function AuthScreen({
       <section className="content-grid auth-grid">
         <article className="glass-card">
           <div className="tab-row">
-            <button type="button" className={authMode === "login" ? "tab-button active" : "tab-button"} onClick={() => onSwitchMode("login")}>
+            <button
+              type="button"
+              className={
+                authMode === "login" ? "tab-button active" : "tab-button"
+              }
+              onClick={() => onSwitchMode("login")}
+            >
               Inicio de sesion
             </button>
-            <button type="button" className={authMode === "register" ? "tab-button active" : "tab-button"} onClick={() => onSwitchMode("register")}>
+            <button
+              type="button"
+              className={
+                authMode === "register" ? "tab-button active" : "tab-button"
+              }
+              onClick={() => onSwitchMode("register")}
+            >
               Registro
             </button>
           </div>
 
           {authMode === "login" ? (
             <form className="stack-form" onSubmit={onLogin}>
-              <SectionHeading eyebrow="Acceso por rol" title="Entrar como jefe o empleado" description="Selecciona el rol correcto para abrir el modulo y cargar el contexto remoto de empresa." />
+              <SectionHeading
+                eyebrow="Acceso por rol"
+                title="Entrar como jefe o empleado"
+                description="Selecciona el rol correcto para abrir el modulo y cargar el contexto remoto de empresa."
+              />
               <label>
                 Correo
-                <input autoComplete="email" type="email" value={loginForm.email} onChange={(event) => onLoginFieldChange("email", event.target.value)} />
+                <input
+                  autoComplete="email"
+                  type="email"
+                  value={loginForm.email}
+                  onChange={(event) =>
+                    onLoginFieldChange("email", event.target.value)
+                  }
+                />
               </label>
               <label>
                 Clave
-                <input autoComplete="current-password" type="password" value={loginForm.password} onChange={(event) => onLoginFieldChange("password", event.target.value)} />
+                <input
+                  autoComplete="current-password"
+                  type="password"
+                  value={loginForm.password}
+                  onChange={(event) =>
+                    onLoginFieldChange("password", event.target.value)
+                  }
+                />
               </label>
               <label>
                 Rol
-                <select value={loginForm.role} onChange={(event) => onLoginFieldChange("role", event.target.value)}>
+                <select
+                  value={loginForm.role}
+                  onChange={(event) =>
+                    onLoginFieldChange("role", event.target.value)
+                  }
+                >
                   <option value="">Selecciona un rol</option>
                   <option value="boss">Jefe</option>
                   <option value="employee">Empleado</option>
                 </select>
               </label>
-              <button className="primary-button" disabled={loading} type="submit">
+              <button
+                className="primary-button"
+                disabled={loading}
+                type="submit"
+              >
                 {loading ? "Cargando..." : "Iniciar sesion"}
               </button>
             </form>
           ) : (
             <form className="stack-form" onSubmit={onRegister}>
-              <SectionHeading eyebrow="Registro vinculado" title="Crear cuenta para jefe o empleado" description="Los jefes crean empresa e ID de acceso. Los empleados se vinculan con ese mismo ID." />
+              <SectionHeading
+                eyebrow="Registro vinculado"
+                title="Crear cuenta para jefe o empleado"
+                description="Los jefes crean empresa e ID de acceso. Los empleados se vinculan con ese mismo ID."
+              />
               <label>
                 Nombre completo
-                <input value={registerForm.fullName} onChange={(event) => onRegisterFieldChange("fullName", event.target.value)} />
+                <input
+                  value={registerForm.fullName}
+                  onChange={(event) =>
+                    onRegisterFieldChange("fullName", event.target.value)
+                  }
+                />
               </label>
               <label>
                 Correo
-                <input type="email" value={registerForm.email} onChange={(event) => onRegisterFieldChange("email", event.target.value)} />
+                <input
+                  type="email"
+                  value={registerForm.email}
+                  onChange={(event) =>
+                    onRegisterFieldChange("email", event.target.value)
+                  }
+                />
               </label>
               <label>
                 Clave
-                <input type="password" value={registerForm.password} onChange={(event) => onRegisterFieldChange("password", event.target.value)} />
+                <input
+                  type="password"
+                  value={registerForm.password}
+                  onChange={(event) =>
+                    onRegisterFieldChange("password", event.target.value)
+                  }
+                />
               </label>
               <label>
                 Rol
-                <select value={registerForm.role} onChange={(event) => onRegisterFieldChange("role", event.target.value)}>
+                <select
+                  value={registerForm.role}
+                  onChange={(event) =>
+                    onRegisterFieldChange("role", event.target.value)
+                  }
+                >
                   <option value="boss">Jefe</option>
                   <option value="employee">Empleado</option>
                 </select>
@@ -782,23 +906,56 @@ function AuthScreen({
                 <>
                   <label>
                     Nombre de la empresa
-                    <input value={registerForm.companyName} onChange={(event) => onRegisterFieldChange("companyName", event.target.value)} />
+                    <input
+                      value={registerForm.companyName}
+                      onChange={(event) =>
+                        onRegisterFieldChange("companyName", event.target.value)
+                      }
+                    />
                   </label>
                   <label>
                     Cargo del jefe
-                    <input value={registerForm.position} onChange={(event) => onRegisterFieldChange("position", event.target.value)} />
+                    <input
+                      value={registerForm.position}
+                      onChange={(event) =>
+                        onRegisterFieldChange("position", event.target.value)
+                      }
+                    />
                   </label>
                 </>
               ) : null}
               <label>
-                {registerForm.role === "boss" ? "ID de empresa" : "ID de empresa entregado por tu jefe"}
-                <input value={registerForm.accessCode} onChange={(event) => onRegisterFieldChange("accessCode", sanitizeAccessCode(event.target.value))} />
+                {registerForm.role === "boss"
+                  ? "ID de empresa"
+                  : "ID de empresa entregado por tu jefe"}
+                <input
+                  value={registerForm.accessCode}
+                  onChange={(event) =>
+                    onRegisterFieldChange(
+                      "accessCode",
+                      sanitizeAccessCode(event.target.value),
+                    )
+                  }
+                />
               </label>
               <label className="checkbox-row">
-                <input checked={dataAuthorizationChecked} type="checkbox" onChange={(event) => onAuthorizationChange(event.target.checked)} />
-                <span>Autorizo el tratamiento de mis datos para operar la plataforma y sincronizar reportes.</span>
+                <input
+                  checked={dataAuthorizationChecked}
+                  type="checkbox"
+                  onChange={(event) =>
+                    onAuthorizationChange(event.target.checked)
+                  }
+                />
+                <span>
+                  Autorizo el tratamiento de mis datos para operar la plataforma
+                  y sincronizar reportes.
+                </span>
               </label>
-              <button className="primary-button" disabled={loading} type="submit">
+              <button
+                className="primary-button"
+                disabled={loading}
+                type="submit"
+              >
                 {loading ? "Registrando..." : "Crear cuenta"}
               </button>
             </form>
@@ -807,10 +964,26 @@ function AuthScreen({
         </article>
 
         <article className="glass-card info-stack">
-          <SectionHeading eyebrow="Contexto actual" title="Onboarding asegurado" description="El acceso local fue reemplazado por autenticacion real contra backend con sesion validable." />
-          <QuoteCard label="Mensaje SEO" text="Software para control de personal, supervision operativa y reportes diarios con evidencias en campo." />
-          <QuoteCard label="Subtitulo comercial" text="Supervisa equipos, documenta novedades y ordena la operacion diaria con una experiencia clara en web y movil." />
-          <InfoCard title="Empresa detectada" message={bossProfile.companyName || "Todavia no hay una empresa activa en el contexto local."} />
+          <SectionHeading
+            eyebrow="Contexto actual"
+            title="Onboarding asegurado"
+            description="El acceso local fue reemplazado por autenticacion real contra backend con sesion validable."
+          />
+          <QuoteCard
+            label="Mensaje SEO"
+            text="Software para control de personal, supervision operativa y reportes diarios con evidencias en campo."
+          />
+          <QuoteCard
+            label="Subtitulo comercial"
+            text="Supervisa equipos, documenta novedades y ordena la operacion diaria con una experiencia clara en web y movil."
+          />
+          <InfoCard
+            title="Empresa detectada"
+            message={
+              bossProfile.companyName ||
+              "Todavia no hay una empresa activa en el contexto local."
+            }
+          />
         </article>
       </section>
     </>
@@ -845,7 +1018,9 @@ function BossScreen({
           </p>
           <div className="stat-grid three-cols mobile-stack">
             <article className="stat-card">
-              <strong>{employeeCount}/{maxEmployeesPerBoss}</strong>
+              <strong>
+                {employeeCount}/{maxEmployeesPerBoss}
+              </strong>
               <span>Empleados activos</span>
             </article>
             <article className="stat-card">
@@ -864,11 +1039,21 @@ function BossScreen({
           <h3>{activeUser.fullName}</h3>
           <p>Jefe vinculado al backend con ID {bossId || "pendiente"}.</p>
           <div className="action-stack">
-            <button className="secondary-button" type="button" onClick={onRefresh} disabled={loading}>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={onRefresh}
+              disabled={loading}
+            >
               {loading ? "Refrescando..." : "Refrescar datos remotos"}
             </button>
             {bossProfile.phone ? (
-              <a className="primary-button" href={`https://wa.me/${bossProfile.phone.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer">
+              <a
+                className="primary-button"
+                href={`https://wa.me/${bossProfile.phone.replace(/[^0-9]/g, "")}`}
+                target="_blank"
+                rel="noreferrer"
+              >
                 Abrir WhatsApp
               </a>
             ) : null}
@@ -879,36 +1064,80 @@ function BossScreen({
       <section className="dashboard-grid boss-grid">
         <article className="glass-card">
           <form className="stack-form" onSubmit={onSaveProfile}>
-            <SectionHeading eyebrow="Perfil del jefe" title="Datos clave de empresa y acceso" description="Manten nombre visible, ID de empresa, canales de contacto y notas operativas listos para el equipo." />
+            <SectionHeading
+              eyebrow="Perfil del jefe"
+              title="Datos clave de empresa y acceso"
+              description="Manten nombre visible, ID de empresa, canales de contacto y notas operativas listos para el equipo."
+            />
             <div className="two-column-grid">
               <label>
                 Nombre del jefe
-                <input value={bossProfile.name} onChange={(event) => onBossFieldChange("name", event.target.value)} />
+                <input
+                  value={bossProfile.name}
+                  onChange={(event) =>
+                    onBossFieldChange("name", event.target.value)
+                  }
+                />
               </label>
               <label>
                 Empresa
-                <input value={bossProfile.companyName} onChange={(event) => onBossFieldChange("companyName", event.target.value)} />
+                <input
+                  value={bossProfile.companyName}
+                  onChange={(event) =>
+                    onBossFieldChange("companyName", event.target.value)
+                  }
+                />
               </label>
               <label>
                 ID de empresa
-                <input value={bossProfile.accessCode} onChange={(event) => onBossFieldChange("accessCode", sanitizeAccessCode(event.target.value))} />
+                <input
+                  value={bossProfile.accessCode}
+                  onChange={(event) =>
+                    onBossFieldChange(
+                      "accessCode",
+                      sanitizeAccessCode(event.target.value),
+                    )
+                  }
+                />
               </label>
               <label>
                 Cargo
-                <input value={bossProfile.position} onChange={(event) => onBossFieldChange("position", event.target.value)} />
+                <input
+                  value={bossProfile.position}
+                  onChange={(event) =>
+                    onBossFieldChange("position", event.target.value)
+                  }
+                />
               </label>
               <label>
                 WhatsApp
-                <input value={bossProfile.phone} onChange={(event) => onBossFieldChange("phone", event.target.value)} />
+                <input
+                  value={bossProfile.phone}
+                  onChange={(event) =>
+                    onBossFieldChange("phone", event.target.value)
+                  }
+                />
               </label>
               <label>
                 Correo
-                <input type="email" value={bossProfile.email} onChange={(event) => onBossFieldChange("email", event.target.value)} />
+                <input
+                  type="email"
+                  value={bossProfile.email}
+                  onChange={(event) =>
+                    onBossFieldChange("email", event.target.value)
+                  }
+                />
               </label>
             </div>
             <label>
               Notas operativas
-              <textarea rows="4" value={bossProfile.notes} onChange={(event) => onBossFieldChange("notes", event.target.value)} />
+              <textarea
+                rows="4"
+                value={bossProfile.notes}
+                onChange={(event) =>
+                  onBossFieldChange("notes", event.target.value)
+                }
+              />
             </label>
             <button className="primary-button" disabled={loading} type="submit">
               {loading ? "Guardando..." : "Guardar perfil del jefe"}
@@ -918,43 +1147,85 @@ function BossScreen({
         </article>
 
         <article className="glass-card">
-          <SectionHeading eyebrow="Capacidad del plan" title="Limite operativo actual" description="El plan FREE permite hasta cinco empleados vinculados por jefe en este flujo actual." />
-          <ProgressPanel current={employeeCount} limit={maxEmployeesPerBoss} alert={limitReached} />
-          <InfoCard title={limitReached ? "Limite alcanzado" : "Todavia hay capacidad"} message={limitReached ? "Llegaste al limite de cinco empleados. Para ampliar el equipo toca cambiar de plan." : "Aun puedes seguir registrando empleados y recibir sus reportes diarios."} />
+          <SectionHeading
+            eyebrow="Capacidad del plan"
+            title="Limite operativo actual"
+            description="El plan FREE permite hasta cinco empleados vinculados por jefe en este flujo actual."
+          />
+          <ProgressPanel
+            current={employeeCount}
+            limit={maxEmployeesPerBoss}
+            alert={limitReached}
+          />
+          <InfoCard
+            title={limitReached ? "Limite alcanzado" : "Todavia hay capacidad"}
+            message={
+              limitReached
+                ? "Llegaste al limite de cinco empleados. Para ampliar el equipo toca cambiar de plan."
+                : "Aun puedes seguir registrando empleados y recibir sus reportes diarios."
+            }
+          />
         </article>
 
         <article className="glass-card wide-panel">
-          <SectionHeading eyebrow="Equipo registrado" title="Empleados vinculados al jefe" description="Cada empleado queda asociado por empresa y aparece aqui con sus datos principales." />
+          <SectionHeading
+            eyebrow="Equipo registrado"
+            title="Empleados vinculados al jefe"
+            description="Cada empleado queda asociado por empresa y aparece aqui con sus datos principales."
+          />
           {employees.length ? (
             <div className="list-stack">
               {employees.map((employee) => (
-                <article className="list-card" key={`${employee.id}-${employee.id_number}`}>
-                  <div className="avatar-pill">{String(employee.full_name || "?").charAt(0).toUpperCase()}</div>
+                <article
+                  className="list-card"
+                  key={`${employee.id}-${employee.id_number}`}
+                >
+                  <div className="avatar-pill">
+                    {String(employee.full_name || "?")
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
                   <div>
                     <strong>{employee.full_name}</strong>
-                    <p>ID: {employee.id_number}  Tel: {employee.phone || "Sin dato"}  {employee.email || "Sin correo"}</p>
+                    <p>
+                      ID: {employee.id_number} Tel:{" "}
+                      {employee.phone || "Sin dato"}{" "}
+                      {employee.email || "Sin correo"}
+                    </p>
                   </div>
                 </article>
               ))}
             </div>
           ) : (
-            <EmptyState title="Sin empleados todavia" message="Cuando un empleado envie su primer reporte, quedara visible aqui con sus datos principales." />
+            <EmptyState
+              title="Sin empleados todavia"
+              message="Cuando un empleado envie su primer reporte, quedara visible aqui con sus datos principales."
+            />
           )}
         </article>
 
         <article className="glass-card wide-panel">
-          <SectionHeading eyebrow="Muro de reportes" title="Evidencia del dia" description="Observaciones, fecha y fotografias subidas por empleados dentro de la misma empresa." />
+          <SectionHeading
+            eyebrow="Muro de reportes"
+            title="Evidencia del dia"
+            description="Observaciones, fecha y fotografias subidas por empleados dentro de la misma empresa."
+          />
           {reports.length ? (
             <div className="report-grid">
               {reports.map((report) => (
                 <article className="report-card" key={report.id}>
                   {report.images?.[0] ? (
-                    <img src={report.images[0]} alt={`Evidencia de ${report.employee_name}`} />
+                    <img
+                      src={report.images[0]}
+                      alt={`Evidencia de ${report.employee_name}`}
+                    />
                   ) : (
                     <div className="report-image empty">Sin foto</div>
                   )}
                   <div className="report-copy">
-                    <strong>{report.employee_name} ({report.employee_id})</strong>
+                    <strong>
+                      {report.employee_name} ({report.employee_id})
+                    </strong>
                     <span>{formatDate(report.created_at)}</span>
                     <p>{report.observations}</p>
                   </div>
@@ -962,7 +1233,10 @@ function BossScreen({
               ))}
             </div>
           ) : (
-            <EmptyState title="Sin reportes aun" message="Cuando los empleados suban observaciones y evidencia, apareceran aqui en orden cronologico." />
+            <EmptyState
+              title="Sin reportes aun"
+              message="Cuando los empleados suban observaciones y evidencia, apareceran aqui en orden cronologico."
+            />
           )}
         </article>
       </section>
@@ -999,7 +1273,9 @@ function EmployeeScreen({
           </p>
           <div className="stat-grid three-cols mobile-stack">
             <article className="stat-card">
-              <strong>{bossProfile.companyName ? "Vinculada" : "Pendiente"}</strong>
+              <strong>
+                {bossProfile.companyName ? "Vinculada" : "Pendiente"}
+              </strong>
               <span>Empresa</span>
             </article>
             <article className="stat-card">
@@ -1016,8 +1292,17 @@ function EmployeeScreen({
         <aside className="hero-card module-card">
           <p className="hero-kicker">Sesion actual</p>
           <h3>{activeUser.fullName}</h3>
-          <p>{bossProfile.companyName ? `Trabajando bajo ${bossProfile.companyName}.` : "Todavia no hay empresa activa en el contexto local."}</p>
-          <button className="secondary-button" type="button" onClick={onRefresh} disabled={loading}>
+          <p>
+            {bossProfile.companyName
+              ? `Trabajando bajo ${bossProfile.companyName}.`
+              : "Todavia no hay empresa activa en el contexto local."}
+          </p>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={onRefresh}
+            disabled={loading}
+          >
             {loading ? "Refrescando..." : "Refrescar datos remotos"}
           </button>
         </aside>
@@ -1026,34 +1311,80 @@ function EmployeeScreen({
       <section className="dashboard-grid employee-grid">
         <article className="glass-card wide-panel">
           <form className="stack-form" onSubmit={onSubmit}>
-            <SectionHeading eyebrow="Formulario de empleado" title="Enviar reporte con evidencia" description="El empleado actualiza sus datos basicos, deja observaciones del dia y adjunta fotografias en un solo envio." />
-            <InfoCard title="Contexto actual" message={bossProfile.companyName ? `Empresa asignada: ${bossProfile.companyName}. Registros activos para el jefe: ${employees.length}/${maxEmployeesPerBoss}.` : "Primero debe existir un jefe registrado para completar la sincronizacion remota."} />
+            <SectionHeading
+              eyebrow="Formulario de empleado"
+              title="Enviar reporte con evidencia"
+              description="El empleado actualiza sus datos basicos, deja observaciones del dia y adjunta fotografias en un solo envio."
+            />
+            <InfoCard
+              title="Contexto actual"
+              message={
+                bossProfile.companyName
+                  ? `Empresa asignada: ${bossProfile.companyName}. Registros activos para el jefe: ${employees.length}/${maxEmployeesPerBoss}.`
+                  : "Primero debe existir un jefe registrado para completar la sincronizacion remota."
+              }
+            />
             <div className="two-column-grid">
               <label>
                 Nombre completo
-                <input value={employeeForm.fullName} onChange={(event) => onEmployeeFieldChange("fullName", event.target.value)} />
+                <input
+                  value={employeeForm.fullName}
+                  onChange={(event) =>
+                    onEmployeeFieldChange("fullName", event.target.value)
+                  }
+                />
               </label>
               <label>
                 Documento o ID
-                <input value={employeeForm.idNumber} onChange={(event) => onEmployeeFieldChange("idNumber", event.target.value)} />
+                <input
+                  value={employeeForm.idNumber}
+                  onChange={(event) =>
+                    onEmployeeFieldChange("idNumber", event.target.value)
+                  }
+                />
               </label>
               <label>
                 Telefono
-                <input value={employeeForm.phone} onChange={(event) => onEmployeeFieldChange("phone", event.target.value)} />
+                <input
+                  value={employeeForm.phone}
+                  onChange={(event) =>
+                    onEmployeeFieldChange("phone", event.target.value)
+                  }
+                />
               </label>
               <label>
                 Correo
-                <input type="email" value={employeeForm.email} onChange={(event) => onEmployeeFieldChange("email", event.target.value)} />
+                <input
+                  type="email"
+                  value={employeeForm.email}
+                  onChange={(event) =>
+                    onEmployeeFieldChange("email", event.target.value)
+                  }
+                />
               </label>
             </div>
             <label>
               Observaciones del dia
-              <textarea rows="5" value={employeeForm.observations} onChange={(event) => onEmployeeFieldChange("observations", event.target.value)} />
+              <textarea
+                rows="5"
+                value={employeeForm.observations}
+                onChange={(event) =>
+                  onEmployeeFieldChange("observations", event.target.value)
+                }
+              />
             </label>
             <label className="file-dropzone">
               <span>Adjuntar imagenes</span>
-              <input type="file" accept="image/*" multiple onChange={(event) => onFilesChange(event.target.files)} />
-              <small>Hasta 5 imagenes por envio. Usa fotos claras del avance o evidencia.</small>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(event) => onFilesChange(event.target.files)}
+              />
+              <small>
+                Hasta 5 imagenes por envio. Usa fotos claras del avance o
+                evidencia.
+              </small>
             </label>
 
             {imagePreviews.length ? (
@@ -1067,15 +1398,25 @@ function EmployeeScreen({
               </div>
             ) : null}
 
-            <button className="primary-button" disabled={submitting} type="submit">
-              {submitting ? "Enviando reporte..." : "Enviar reporte y evidencia"}
+            <button
+              className="primary-button"
+              disabled={submitting}
+              type="submit"
+            >
+              {submitting
+                ? "Enviando reporte..."
+                : "Enviar reporte y evidencia"}
             </button>
           </form>
           <StatusBanner status={status} />
         </article>
 
         <article className="glass-card">
-          <SectionHeading eyebrow="Ultimos reportes" title="Historial visible del jefe" description="La lista muestra el mismo backend del panel del jefe, util para verificar sincronizacion en tiempo real." />
+          <SectionHeading
+            eyebrow="Ultimos reportes"
+            title="Historial visible del jefe"
+            description="La lista muestra el mismo backend del panel del jefe, util para verificar sincronizacion en tiempo real."
+          />
           {reports.length ? (
             <div className="mini-list-stack">
               {reports.slice(0, 5).map((report) => (
@@ -1087,7 +1428,10 @@ function EmployeeScreen({
               ))}
             </div>
           ) : (
-            <EmptyState title="Sin reportes sincronizados" message="Cuando envies el primer reporte con evidencia, aparecera aqui y en el panel del jefe." />
+            <EmptyState
+              title="Sin reportes sincronizados"
+              message="Cuando envies el primer reporte con evidencia, aparecera aqui y en el panel del jefe."
+            />
           )}
         </article>
       </section>
@@ -1146,11 +1490,16 @@ function ProgressPanel({ current, limit, alert }) {
   return (
     <div className="progress-panel">
       <div className="progress-copy">
-        <strong>{current}/{limit} empleados</strong>
+        <strong>
+          {current}/{limit} empleados
+        </strong>
         <span>{alert ? "Capacidad agotada" : "Capacidad disponible"}</span>
       </div>
       <div className="progress-track">
-        <div className={alert ? "progress-fill alert" : "progress-fill"} style={{ width: `${percentage}%` }} />
+        <div
+          className={alert ? "progress-fill alert" : "progress-fill"}
+          style={{ width: `${percentage}%` }}
+        />
       </div>
     </div>
   );

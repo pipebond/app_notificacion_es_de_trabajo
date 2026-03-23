@@ -50,4 +50,3 @@ backend/node_modules/
 backend/uploads/
 webapp/node_modules/
 webapp/dist/
-.vercel

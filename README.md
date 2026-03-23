@@ -70,46 +70,28 @@ C:/src/flutter/bin/flutter.bat analyze
 C:/src/flutter/bin/flutter.bat test
 ```
 
-## Despliegue en GitHub, Vercel y Render
+## Ejecucion Local (Backend + Web)
 
-### 1. Subir repositorio a GitHub
+### 1. Backend local
+
+Configura `backend/.env` con valores de base de datos local y claves de API.
 
 ```powershell
-cd c:/Users/kakas/OneDrive/Desktop/app_notificacion_es_de_trabajo
-git init
-git add .
-git commit -m "feat: proyecto Flutter + backend Node listo para deploy"
-git branch -M main
-git remote add origin https://github.com/TU_USUARIO/TU_REPO.git
-git push -u origin main
+cd backend
+npm install
+npm start
 ```
 
-### 2. Backend en Render
+Endpoint de salud esperado:
 
-- Este repo ya incluye `render.yaml` para crear el servicio web desde el archivo.
-- En Render, crea un servicio desde repositorio y selecciona Blueprint.
-- Configura estas variables (las marcadas en `render.yaml` con `sync: false`):
-  - `DB_HOST`
-  - `DB_PORT`
-  - `DB_USER`
-  - `DB_PASSWORD`
-  - `DB_NAME`
-  - `API_KEY`
-  - `CORS_ORIGINS` (incluye la URL final de Vercel)
+- `GET http://localhost:4000/api/health`
 
-Healthcheck esperado del backend:
+### 2. Frontend web local
 
-- `GET /api/health`
+Configura `webapp/.env` con:
 
-### 3. Frontend web en Vercel
-
-- Este repo ya incluye `vercel.json` apuntando a `webapp/`.
-- En Vercel, importa el repositorio.
-- Variables de entorno requeridas para la web React:
-  - `VITE_API_BASE_URL` (ejemplo: `https://tu-backend.onrender.com/api`)
-  - `VITE_API_KEY` (misma del backend)
-
-Comandos locales de la web:
+- `VITE_API_BASE_URL=http://localhost:4000/api`
+- `VITE_API_KEY=TU_API_KEY_LOCAL`
 
 ```powershell
 cd webapp
@@ -117,32 +99,17 @@ npm install
 npm run dev
 ```
 
-Build local de la web:
+Build local de verificacion:
 
 ```powershell
 cd webapp
 npm run build
 ```
 
-La web incluye:
-
-- branding con el logo oficial
-- metadatos SEO
-- Vercel Analytics
-- `robots.txt`, `sitemap.xml` y `security.txt`
-- headers de seguridad en `vercel.json`
-
-### 4. Orden recomendado
-
-1. Publicar backend en Render y copiar URL publica.
-2. Configurar `VITE_API_BASE_URL` y `VITE_API_KEY` en Vercel.
-3. Publicar frontend React en Vercel.
-4. Actualizar `CORS_ORIGINS` en Render con la URL final de Vercel.
-
 ## Variables para Flutter móvil
 
 Para builds móviles, pasa las variables sensibles con `dart-define`:
 
 ```powershell
-C:/src/flutter/bin/flutter.bat run --dart-define=API_BASE_URL=https://tu-backend.onrender.com/api --dart-define=API_KEY=TU_API_KEY
+C:/src/flutter/bin/flutter.bat run --dart-define=API_BASE_URL=http://localhost:4000/api --dart-define=API_KEY=TU_API_KEY
 ```
