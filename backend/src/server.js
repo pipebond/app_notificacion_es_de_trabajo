@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const app = require("./app");
 const pool = require("./db/pool");
+const ensureSchema = require("./db/ensureSchema");
 
 const PORT = Number(process.env.PORT || 4000);
 
@@ -38,12 +39,15 @@ function validateEnvironment() {
 async function bootstrap() {
   try {
     validateEnvironment();
+    await ensureSchema();
     await pool.query("SELECT 1");
     app.listen(PORT, () => {
       console.log(`Backend escuchando en http://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error("No fue posible conectar a MySQL. Revisa .env y Workbench.");
+    console.error(
+      "No fue posible inicializar MySQL. Revisa la configuracion y el esquema.",
+    );
     console.error(error.message);
     process.exit(1);
   }
