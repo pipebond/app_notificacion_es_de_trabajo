@@ -43,7 +43,35 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    window.addEventListener('load', function () {
+      const loadFlutterBootstrap = function () {
+        const script = document.createElement('script');
+        script.src = 'flutter_bootstrap.js?v=20260322b';
+        script.async = true;
+        document.body.appendChild(script);
+      };
+
+      if (!('serviceWorker' in navigator)) {
+        loadFlutterBootstrap();
+        return;
+      }
+
+      navigator.serviceWorker
+        .getRegistrations()
+        .then(function (registrations) {
+          return Promise.all(
+            registrations.map(function (registration) {
+              return registration.unregister();
+            }),
+          );
+        })
+        .catch(function () {
+          return undefined;
+        })
+        .finally(loadFlutterBootstrap);
+    });
+  </script>
 </body>
 
 </html>
