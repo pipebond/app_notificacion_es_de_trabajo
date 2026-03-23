@@ -7,6 +7,18 @@ const ensureSchema = require("./db/ensureSchema");
 const PORT = Number(process.env.PORT || 4000);
 
 function validateEnvironment() {
+  if (!process.env.JWT_SECRET) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("Falta variable requerida JWT_SECRET en produccion");
+      process.exit(1);
+    }
+
+    process.env.JWT_SECRET = "dev_jwt_secret_change_me";
+    console.warn(
+      "JWT_SECRET no definido. Usando secreto temporal de desarrollo. Configura JWT_SECRET para despliegues reales.",
+    );
+  }
+
   const hasDbUrl = Boolean(
     process.env.DB_URL || process.env.MYSQL_PUBLIC_URL || process.env.MYSQL_URL,
   );

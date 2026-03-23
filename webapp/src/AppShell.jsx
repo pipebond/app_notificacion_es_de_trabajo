@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import "./app-shell.css";
 
 const defaultApiBaseUrl = "https://reportapro-backend.onrender.com/api";
@@ -7,8 +7,7 @@ const apiBaseUrl = (
 ).replace(/\/$/, "");
 const apiKey = (import.meta.env.VITE_API_KEY || "").trim();
 
-const USERS_STORAGE_KEY = "reportapro_web_users_v1";
-const SESSION_STORAGE_KEY = "reportapro_web_session_v1";
+const SESSION_STORAGE_KEY = "reportapro_web_session_v2";
 const BOSS_ID_STORAGE_KEY = "reportapro_web_boss_id";
 const BOSS_PROFILE_STORAGE_KEY = "reportapro_web_boss_profile";
 const maxEmployeesPerBoss = 5;
@@ -74,7 +73,6 @@ function parseStoredJson(key, fallback) {
 
 async function parseResponse(response) {
   const text = await response.text();
-
   if (!text) {
     return null;
   }
@@ -87,11 +85,7 @@ async function parseResponse(response) {
 }
 
 function buildErrorMessage(payload, fallback) {
-  if (
-    payload &&
-    typeof payload === "object" &&
-    typeof payload.message === "string"
-  ) {
+  if (payload && typeof payload === "object" && typeof payload.message === "string") {
     return payload.message;
   }
 
@@ -104,9 +98,7 @@ function buildErrorMessage(payload, fallback) {
 
 async function apiRequest(path, options = {}) {
   if (!apiKey) {
-    throw new Error(
-      "Falta configurar VITE_API_KEY para proteger el acceso web.",
-    );
+    throw new Error("Falta configurar VITE_API_KEY para proteger el acceso web.");
   }
 
   const isFormData = options.body instanceof FormData;
@@ -122,7 +114,6 @@ async function apiRequest(path, options = {}) {
   });
 
   const payload = await parseResponse(response);
-
   if (!response.ok) {
     throw new Error(buildErrorMessage(payload, `HTTP ${response.status}`));
   }
@@ -131,41 +122,39 @@ async function apiRequest(path, options = {}) {
 }
 
 const api = {
+  register(payload) {
+    return apiRequest("/auth/register", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  login(payload) {
+    return apiRequest("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+  getSession(token) {
+    return apiRequest("/auth/session", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
   createBoss(profile) {
     return apiRequest("/bosses", {
       method: "POST",
-      body: JSON.stringify({
-        name: profile.name,
-        companyName: profile.companyName,
-        accessCode: profile.accessCode,
-        position: profile.position,
-        phone: profile.phone,
-        email: profile.email,
-        notes: profile.notes,
-        plan: "FREE",
-      }),
+      body: JSON.stringify({ ...profile, plan: "FREE" }),
     });
   },
   updateBoss(bossId, profile) {
     return apiRequest(`/bosses/${bossId}`, {
       method: "PUT",
-      body: JSON.stringify({
-        name: profile.name,
-        companyName: profile.companyName,
-        accessCode: profile.accessCode,
-        position: profile.position,
-        phone: profile.phone,
-        email: profile.email,
-        notes: profile.notes,
-        plan: "FREE",
-      }),
+      body: JSON.stringify({ ...profile, plan: "FREE" }),
     });
   },
   getBoss(bossId) {
     return apiRequest(`/bosses/${bossId}`);
-  },
-  getBossByAccessCode(accessCode) {
-    return apiRequest(`/bosses/by-access/${sanitizeAccessCode(accessCode)}`);
   },
   listEmployees(bossId) {
     return apiRequest(`/bosses/${bossId}/employees`);
@@ -187,10 +176,7 @@ const api = {
   },
   uploadImages(files) {
     const form = new FormData();
-    files.forEach((file) => {
-      form.append("images", file);
-    });
-
+    files.forEach((file) => form.append("images", file));
     return apiRequest("/uploads", {
       method: "POST",
       body: form,
@@ -200,19 +186,14 @@ const api = {
 
 export default function AppShell() {
   const [authMode, setAuthMode] = useState("login");
-  const [usersLoaded, setUsersLoaded] = useState(false);
-  const [users, setUsers] = useState([]);
+  const [bootstrapped, setBootstrapped] = useState(false);
+  const [sessionToken, setSessionToken] = useState("");
   const [activeUser, setActiveUser] = useState(null);
   const [status, setStatus] = useState({ type: "idle", message: "" });
   const [loading, setLoading] = useState(false);
-  const [loginForm, setLoginForm] = useState({
-    email: "",
-    password: "",
-    role: "",
-  });
+  const [loginForm, setLoginForm] = useState({ email: "", password: "", role: "" });
   const [registerForm, setRegisterForm] = useState(initialRegisterForm);
-  const [dataAuthorizationChecked, setDataAuthorizationChecked] =
-    useState(false);
+  const [dataAuthorizationChecked, setDataAuthorizationChecked] = useState(false);
   const [bossProfile, setBossProfile] = useState(emptyBossProfile);
   const [bossId, setBossId] = useState(null);
   const [employees, setEmployees] = useState([]);
@@ -223,45 +204,37 @@ export default function AppShell() {
   const [submittingEmployee, setSubmittingEmployee] = useState(false);
 
   useEffect(() => {
-    const storedUsers = parseStoredJson(USERS_STORAGE_KEY, []);
     const storedSession = parseStoredJson(SESSION_STORAGE_KEY, null);
-    const storedBossProfile = parseStoredJson(
-      BOSS_PROFILE_STORAGE_KEY,
-      emptyBossProfile,
-    );
-    const storedBossId =
-      Number(localStorage.getItem(BOSS_ID_STORAGE_KEY) || 0) || null;
+    const storedBossProfile = parseStoredJson(BOSS_PROFILE_STORAGE_KEY, emptyBossProfile);
+    const storedBossId = Number(localStorage.getItem(BOSS_ID_STORAGE_KEY) || 0) || null;
 
-    setUsers(Array.isArray(storedUsers) ? storedUsers : []);
-    setActiveUser(
-      storedSession && typeof storedSession === "object" ? storedSession : null,
-    );
+    if (storedSession?.token && storedSession?.user) {
+      setSessionToken(storedSession.token);
+      setActiveUser(storedSession.user);
+    }
+
     setBossProfile(normalizeBossProfile(storedBossProfile));
     setBossId(storedBossId);
-    setUsersLoaded(true);
+    setBootstrapped(true);
   }, []);
 
   useEffect(() => {
-    if (!usersLoaded) {
-      return;
-    }
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-  }, [users, usersLoaded]);
-
-  useEffect(() => {
-    if (!usersLoaded) {
+    if (!bootstrapped) {
       return;
     }
 
-    if (activeUser) {
-      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(activeUser));
+    if (sessionToken && activeUser) {
+      localStorage.setItem(
+        SESSION_STORAGE_KEY,
+        JSON.stringify({ token: sessionToken, user: activeUser }),
+      );
     } else {
       localStorage.removeItem(SESSION_STORAGE_KEY);
     }
-  }, [activeUser, usersLoaded]);
+  }, [sessionToken, activeUser, bootstrapped]);
 
   useEffect(() => {
-    if (!usersLoaded) {
+    if (!bootstrapped) {
       return;
     }
 
@@ -270,22 +243,14 @@ export default function AppShell() {
     } else {
       localStorage.removeItem(BOSS_ID_STORAGE_KEY);
     }
-  }, [bossId, usersLoaded]);
+  }, [bossId, bootstrapped]);
 
   useEffect(() => {
-    if (!usersLoaded) {
+    if (!bootstrapped) {
       return;
     }
     localStorage.setItem(BOSS_PROFILE_STORAGE_KEY, JSON.stringify(bossProfile));
-  }, [bossProfile, usersLoaded]);
-
-  useEffect(() => {
-    if (!usersLoaded || !activeUser?.bossId) {
-      return;
-    }
-
-    hydrateBossContext(activeUser.bossId).catch(() => undefined);
-  }, [activeUser?.bossId, usersLoaded]);
+  }, [bossProfile, bootstrapped]);
 
   useEffect(() => {
     const previews = selectedFiles.map((file) => ({
@@ -300,34 +265,13 @@ export default function AppShell() {
     };
   }, [selectedFiles]);
 
-  async function hydrateBossContext(selectedBossId) {
-    setLoading(true);
-
-    try {
-      const [remoteProfile, remoteEmployees, remoteReports] = await Promise.all(
-        [
-          api.getBoss(selectedBossId),
-          api.listEmployees(selectedBossId),
-          api.listReports(selectedBossId),
-        ],
-      );
-
-      setBossId(selectedBossId);
-      setBossProfile(normalizeBossProfile(remoteProfile));
-      setEmployees(Array.isArray(remoteEmployees) ? remoteEmployees : []);
-      setReports(Array.isArray(remoteReports) ? remoteReports : []);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function refreshRemoteData() {
-    if (!bossId) {
+  useEffect(() => {
+    if (!bootstrapped || !sessionToken || !activeUser?.bossId) {
       return;
     }
 
-    await hydrateBossContext(bossId);
-  }
+    refreshSessionAndData().catch(() => undefined);
+  }, [bootstrapped, sessionToken, activeUser?.bossId]);
 
   function showError(error, fallback) {
     setStatus({
@@ -336,97 +280,86 @@ export default function AppShell() {
     });
   }
 
-  async function handleRegister(event) {
-    event.preventDefault();
-    setStatus({ type: "idle", message: "" });
-
-    const fullName = registerForm.fullName.trim();
-    const email = registerForm.email.trim().toLowerCase();
-    const password = registerForm.password;
-    const companyName = registerForm.companyName.trim();
-    const accessCode = sanitizeAccessCode(registerForm.accessCode);
-    const position = registerForm.position.trim();
-    const role = registerForm.role || "employee";
-
-    if (
-      !fullName ||
-      !email ||
-      password.length < 6 ||
-      !dataAuthorizationChecked
-    ) {
-      setStatus({
-        type: "error",
-        message:
-          "Completa datos basicos, clave minima de 6 caracteres y autorizacion de datos.",
-      });
-      return;
-    }
-
-    if (users.some((user) => user.email === email)) {
-      setStatus({ type: "error", message: "Ese correo ya esta registrado." });
+  async function refreshSessionAndData() {
+    if (!sessionToken || !activeUser?.bossId) {
       return;
     }
 
     setLoading(true);
-
     try {
-      let linkedBossId = null;
-      let linkedCompany = "";
-
-      if (role === "boss") {
-        if (!companyName || accessCode.length < 4) {
-          throw new Error(
-            "Como jefe debes registrar empresa e ID de empresa valido.",
-          );
-        }
-
-        const profile = {
-          name: fullName,
-          companyName,
-          accessCode,
-          position: position || "Jefe de equipo",
-          phone: "",
-          email,
-          notes: "Cuenta creada desde la web React",
-        };
-
-        const result = await api.createBoss(profile);
-        linkedBossId = result?.id ?? null;
-        linkedCompany = companyName;
-      } else {
-        if (accessCode.length < 4) {
-          throw new Error("Como empleado debes ingresar el ID de empresa.");
-        }
-
-        const bossData = await api.getBossByAccessCode(accessCode);
-        linkedBossId = bossData?.id ?? null;
-        linkedCompany = bossData?.company_name || bossData?.companyName || "";
-
-        if (!linkedBossId) {
-          throw new Error("No se pudo resolver la empresa vinculada.");
-        }
-      }
-
-      setUsers((current) => [
-        ...current,
-        {
-          fullName,
-          email,
-          password,
-          role,
-          bossId: linkedBossId,
-          companyName: linkedCompany,
-          dataAuthorized: true,
-        },
+      const [sessionResult, remoteProfile, remoteEmployees, remoteReports] = await Promise.all([
+        api.getSession(sessionToken),
+        api.getBoss(activeUser.bossId),
+        api.listEmployees(activeUser.bossId),
+        api.listReports(activeUser.bossId),
       ]);
+
+      setActiveUser(sessionResult.user);
+      setBossId(activeUser.bossId);
+      setBossProfile(normalizeBossProfile(remoteProfile));
+      setEmployees(Array.isArray(remoteEmployees) ? remoteEmployees : []);
+      setReports(Array.isArray(remoteReports) ? remoteReports : []);
+    } catch (error) {
+      handleLogout();
+      showError(error, "Tu sesion expiro. Inicia sesion de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function refreshRemoteData() {
+    if (!activeUser?.bossId) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const [remoteProfile, remoteEmployees, remoteReports] = await Promise.all([
+        api.getBoss(activeUser.bossId),
+        api.listEmployees(activeUser.bossId),
+        api.listReports(activeUser.bossId),
+      ]);
+
+      setBossId(activeUser.bossId);
+      setBossProfile(normalizeBossProfile(remoteProfile));
+      setEmployees(Array.isArray(remoteEmployees) ? remoteEmployees : []);
+      setReports(Array.isArray(remoteReports) ? remoteReports : []);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleRegister(event) {
+    event.preventDefault();
+    setStatus({ type: "idle", message: "" });
+
+    const payload = {
+      fullName: registerForm.fullName.trim(),
+      email: registerForm.email.trim().toLowerCase(),
+      password: registerForm.password,
+      role: registerForm.role || "employee",
+      companyName: registerForm.companyName.trim(),
+      accessCode: sanitizeAccessCode(registerForm.accessCode),
+      position: registerForm.position.trim(),
+      dataAuthorized: dataAuthorizationChecked,
+    };
+
+    if (!payload.fullName || !payload.email || payload.password.length < 6 || !payload.dataAuthorized) {
+      setStatus({
+        type: "error",
+        message: "Completa datos basicos, clave minima de 6 caracteres y autorizacion de datos.",
+      });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await api.register(payload);
       setRegisterForm(initialRegisterForm);
       setDataAuthorizationChecked(false);
       setAuthMode("login");
-      setLoginForm({ email, password: "", role });
-      setStatus({
-        type: "success",
-        message: "Registro exitoso. Ahora inicia sesion.",
-      });
+      setLoginForm({ email: payload.email, password: "", role: payload.role });
+      setStatus({ type: "success", message: "Registro exitoso. Ahora inicia sesion." });
     } catch (error) {
       showError(error, "No fue posible completar el registro.");
     } finally {
@@ -438,11 +371,13 @@ export default function AppShell() {
     event.preventDefault();
     setStatus({ type: "idle", message: "" });
 
-    const email = loginForm.email.trim().toLowerCase();
-    const password = loginForm.password;
-    const role = loginForm.role;
+    const payload = {
+      email: loginForm.email.trim().toLowerCase(),
+      password: loginForm.password,
+      role: loginForm.role,
+    };
 
-    if (!email || !password || !role) {
+    if (!payload.email || !payload.password || !payload.role) {
       setStatus({
         type: "error",
         message: "Completa correo, clave y rol para iniciar sesion.",
@@ -450,40 +385,42 @@ export default function AppShell() {
       return;
     }
 
-    const user = users.find(
-      (item) =>
-        item.email === email &&
-        item.password === password &&
-        item.role === role,
-    );
-
-    if (!user) {
-      setStatus({ type: "error", message: "Credenciales o rol incorrectos." });
-      return;
-    }
-
-    if (!user.bossId) {
-      setStatus({
-        type: "error",
-        message: "La cuenta no tiene empresa vinculada. Registra de nuevo.",
-      });
-      return;
-    }
-
     setLoading(true);
-
     try {
-      await hydrateBossContext(user.bossId);
+      const loginResult = await api.login(payload);
+      const token = loginResult?.token || "";
+      const user = loginResult?.user || null;
+
+      if (!token || !user?.bossId) {
+        throw new Error("Sesion incompleta. Revisa tu cuenta y rol.");
+      }
+
+      setSessionToken(token);
       setActiveUser(user);
+      await refreshRemoteDataByBoss(user.bossId);
       setStatus({ type: "success", message: `Bienvenido, ${user.fullName}.` });
     } catch (error) {
-      showError(error, "No fue posible abrir la sesion.");
+      showError(error, "No fue posible iniciar sesion.");
     } finally {
       setLoading(false);
     }
   }
 
+  async function refreshRemoteDataByBoss(targetBossId) {
+    const [remoteProfile, remoteEmployees, remoteReports] = await Promise.all([
+      api.getBoss(targetBossId),
+      api.listEmployees(targetBossId),
+      api.listReports(targetBossId),
+    ]);
+
+    setBossId(targetBossId);
+    setBossProfile(normalizeBossProfile(remoteProfile));
+    setEmployees(Array.isArray(remoteEmployees) ? remoteEmployees : []);
+    setReports(Array.isArray(remoteReports) ? remoteReports : []);
+  }
+
   function handleLogout() {
+    setSessionToken("");
     setActiveUser(null);
     setBossId(null);
     setBossProfile(emptyBossProfile);
@@ -493,6 +430,7 @@ export default function AppShell() {
     setImagePreviews([]);
     setEmployeeForm(initialEmployeeForm);
     setStatus({ type: "idle", message: "" });
+    localStorage.removeItem(SESSION_STORAGE_KEY);
   }
 
   async function handleSaveBossProfile(event) {
@@ -508,24 +446,17 @@ export default function AppShell() {
       notes: bossProfile.notes.trim(),
     };
 
-    if (
-      !payload.name ||
-      !payload.companyName ||
-      !payload.accessCode ||
-      !payload.position
-    ) {
+    if (!payload.name || !payload.companyName || !payload.accessCode || !payload.position) {
       setStatus({
         type: "error",
-        message:
-          "Completa nombre, empresa, ID de empresa y cargo del responsable.",
+        message: "Completa nombre, empresa, ID de empresa y cargo del responsable.",
       });
       return;
     }
 
     setLoading(true);
-
     try {
-      let resolvedBossId = bossId;
+      let resolvedBossId = bossId || activeUser?.bossId || null;
 
       if (!resolvedBossId) {
         const result = await api.createBoss(payload);
@@ -538,14 +469,10 @@ export default function AppShell() {
         throw new Error("No se pudo resolver el ID del jefe.");
       }
 
-      await hydrateBossContext(resolvedBossId);
+      await refreshRemoteDataByBoss(resolvedBossId);
       setActiveUser((current) =>
         current
-          ? {
-              ...current,
-              bossId: resolvedBossId,
-              companyName: payload.companyName,
-            }
+          ? { ...current, bossId: resolvedBossId, companyName: payload.companyName }
           : current,
       );
       setStatus({
@@ -565,8 +492,7 @@ export default function AppShell() {
     if (!bossId) {
       setStatus({
         type: "error",
-        message:
-          "Primero debe existir un jefe registrado para sincronizar reportes.",
+        message: "Primero debe existir un jefe registrado para sincronizar reportes.",
       });
       return;
     }
@@ -579,14 +505,10 @@ export default function AppShell() {
       observations: employeeForm.observations.trim(),
     };
 
-    if (
-      !payload.fullName ||
-      !payload.idNumber ||
-      payload.observations.length < 3
-    ) {
+    if (!payload.fullName || !payload.idNumber || payload.observations.length < 3) {
       setStatus({
         type: "error",
-        message: "Completa nombre, identificación y observaciones del reporte.",
+        message: "Completa nombre, identificacion y observaciones del reporte.",
       });
       return;
     }
@@ -620,9 +542,7 @@ export default function AppShell() {
       let imageUrls = [];
       if (selectedFiles.length) {
         const uploadResult = await api.uploadImages(selectedFiles);
-        imageUrls = Array.isArray(uploadResult?.imageUrls)
-          ? uploadResult.imageUrls
-          : [];
+        imageUrls = Array.isArray(uploadResult?.imageUrls) ? uploadResult.imageUrls : [];
       }
 
       await api.createReport({
@@ -636,10 +556,7 @@ export default function AppShell() {
       setReports(Array.isArray(remoteReports) ? remoteReports : []);
       setEmployeeForm(initialEmployeeForm);
       setSelectedFiles([]);
-      setStatus({
-        type: "success",
-        message: "Reporte enviado y sincronizado correctamente.",
-      });
+      setStatus({ type: "success", message: "Reporte enviado y sincronizado correctamente." });
     } catch (error) {
       showError(error, "No fue posible enviar el reporte del empleado.");
     } finally {
@@ -657,15 +574,9 @@ export default function AppShell() {
 
       <header className="topbar">
         <div className="brand-lockup">
-          <img
-            className="brand-icon"
-            src="/reportapro-icon.svg"
-            alt="Icono de ReportaPro"
-          />
+          <img className="brand-icon" src="/reportapro-icon.svg" alt="Icono de ReportaPro" />
           <div>
-            <p className="eyebrow">
-              Control diario de personal y reportes operativos
-            </p>
+            <p className="eyebrow">Control diario de personal y reportes operativos</p>
             <h1>ReportaPro</h1>
           </div>
         </div>
@@ -682,7 +593,7 @@ export default function AppShell() {
       </header>
 
       <main className="layout" id="principal">
-        {!usersLoaded ? (
+        {!bootstrapped ? (
           <LoadingState />
         ) : !activeUser ? (
           <AuthScreen
@@ -749,7 +660,7 @@ function LoadingState() {
     <section className="single-panel centered-panel glass-card compact-panel">
       <div className="loader" />
       <h2>Preparando tu espacio de trabajo</h2>
-      <p>Sincronizando sesión local, branding y conexión con el backend.</p>
+      <p>Sincronizando sesion, branding y conexion con el backend.</p>
     </section>
   );
 }
@@ -771,24 +682,18 @@ function AuthScreen({
 }) {
   const highlights = [
     "Registro por rol con empresa vinculada y control de acceso.",
-    "Sincronización directa con jefes, empleados, evidencias y reportes.",
-    "Misma identidad visual para web React y experiencia móvil Flutter.",
+    "Sincronizacion directa con jefes, empleados, evidencias y reportes.",
+    "Misma identidad visual para web React y experiencia movil Flutter.",
   ];
 
   return (
     <>
       <section className="hero-panel auth-hero">
         <div className="hero-copy">
-          <span className="badge">
-            React web completo para supervisión operativa
-          </span>
-          <h2>
-            Controla personal, reportes y evidencia desde una web más ágil.
-          </h2>
+          <span className="badge">Autenticacion real en backend</span>
+          <h2>Controla personal, reportes y evidencia desde una web agil.</h2>
           <p>
-            ReportaPro ahora corre en React para la web con un flujo completo
-            por rol: registro, inicio de sesión, panel del jefe, formulario del
-            empleado, subida de fotos y muro de reportes.
+            El acceso ahora usa registro e inicio de sesion reales sobre backend con hash de contrasenas y token de sesion.
           </p>
           <ul className="highlight-list">
             {highlights.map((item) => (
@@ -798,17 +703,11 @@ function AuthScreen({
         </div>
 
         <aside className="hero-card auth-card">
-          <img
-            className="hero-logo"
-            src="/reportapro-horizontal.svg"
-            alt="Logo horizontal de ReportaPro"
-          />
+          <img className="hero-logo" src="/reportapro-horizontal.svg" alt="Logo horizontal de ReportaPro" />
           <p className="hero-kicker">Slogan principal</p>
           <h3>Reportes diarios claros. Equipos alineados. Evidencia lista.</h3>
           <p>
-            Software para control de personal, seguimiento operativo y reportes
-            de campo con una interfaz más predecible para Vercel y más ligera
-            para navegador.
+            Software para control de personal, seguimiento operativo y reportes de campo con flujo seguro en la web.
           </p>
           <div className="stat-grid two-cols">
             <article className="stat-card">
@@ -817,7 +716,7 @@ function AuthScreen({
             </article>
             <article className="stat-card">
               <strong>{bossProfile.companyName || "1 flujo"}</strong>
-              <span>Contexto local listo</span>
+              <span>Contexto listo</span>
             </article>
           </div>
         </aside>
@@ -826,120 +725,55 @@ function AuthScreen({
       <section className="content-grid auth-grid">
         <article className="glass-card">
           <div className="tab-row">
-            <button
-              type="button"
-              className={
-                authMode === "login" ? "tab-button active" : "tab-button"
-              }
-              onClick={() => onSwitchMode("login")}
-            >
+            <button type="button" className={authMode === "login" ? "tab-button active" : "tab-button"} onClick={() => onSwitchMode("login")}>
               Inicio de sesion
             </button>
-            <button
-              type="button"
-              className={
-                authMode === "register" ? "tab-button active" : "tab-button"
-              }
-              onClick={() => onSwitchMode("register")}
-            >
+            <button type="button" className={authMode === "register" ? "tab-button active" : "tab-button"} onClick={() => onSwitchMode("register")}>
               Registro
             </button>
           </div>
 
           {authMode === "login" ? (
             <form className="stack-form" onSubmit={onLogin}>
-              <SectionHeading
-                eyebrow="Acceso por rol"
-                title="Entrar como jefe o empleado"
-                description="Selecciona el rol correcto para abrir el módulo correspondiente y cargar el contexto remoto de la empresa."
-              />
+              <SectionHeading eyebrow="Acceso por rol" title="Entrar como jefe o empleado" description="Selecciona el rol correcto para abrir el modulo y cargar el contexto remoto de empresa." />
               <label>
                 Correo
-                <input
-                  autoComplete="email"
-                  type="email"
-                  value={loginForm.email}
-                  onChange={(event) =>
-                    onLoginFieldChange("email", event.target.value)
-                  }
-                />
+                <input autoComplete="email" type="email" value={loginForm.email} onChange={(event) => onLoginFieldChange("email", event.target.value)} />
               </label>
               <label>
                 Clave
-                <input
-                  autoComplete="current-password"
-                  type="password"
-                  value={loginForm.password}
-                  onChange={(event) =>
-                    onLoginFieldChange("password", event.target.value)
-                  }
-                />
+                <input autoComplete="current-password" type="password" value={loginForm.password} onChange={(event) => onLoginFieldChange("password", event.target.value)} />
               </label>
               <label>
                 Rol
-                <select
-                  value={loginForm.role}
-                  onChange={(event) =>
-                    onLoginFieldChange("role", event.target.value)
-                  }
-                >
+                <select value={loginForm.role} onChange={(event) => onLoginFieldChange("role", event.target.value)}>
                   <option value="">Selecciona un rol</option>
                   <option value="boss">Jefe</option>
                   <option value="employee">Empleado</option>
                 </select>
               </label>
-              <button
-                className="primary-button"
-                disabled={loading}
-                type="submit"
-              >
+              <button className="primary-button" disabled={loading} type="submit">
                 {loading ? "Cargando..." : "Iniciar sesion"}
               </button>
             </form>
           ) : (
             <form className="stack-form" onSubmit={onRegister}>
-              <SectionHeading
-                eyebrow="Registro vinculado"
-                title="Crear cuenta para jefe o empleado"
-                description="Los jefes crean empresa e ID de acceso. Los empleados se vinculan con ese mismo ID para heredar el contexto correcto."
-              />
+              <SectionHeading eyebrow="Registro vinculado" title="Crear cuenta para jefe o empleado" description="Los jefes crean empresa e ID de acceso. Los empleados se vinculan con ese mismo ID." />
               <label>
                 Nombre completo
-                <input
-                  value={registerForm.fullName}
-                  onChange={(event) =>
-                    onRegisterFieldChange("fullName", event.target.value)
-                  }
-                />
+                <input value={registerForm.fullName} onChange={(event) => onRegisterFieldChange("fullName", event.target.value)} />
               </label>
               <label>
                 Correo
-                <input
-                  type="email"
-                  value={registerForm.email}
-                  onChange={(event) =>
-                    onRegisterFieldChange("email", event.target.value)
-                  }
-                />
+                <input type="email" value={registerForm.email} onChange={(event) => onRegisterFieldChange("email", event.target.value)} />
               </label>
               <label>
                 Clave
-                <input
-                  type="password"
-                  value={registerForm.password}
-                  onChange={(event) =>
-                    onRegisterFieldChange("password", event.target.value)
-                  }
-                />
+                <input type="password" value={registerForm.password} onChange={(event) => onRegisterFieldChange("password", event.target.value)} />
               </label>
               <label>
                 Rol
-                <select
-                  value={registerForm.role}
-                  onChange={(event) =>
-                    onRegisterFieldChange("role", event.target.value)
-                  }
-                >
+                <select value={registerForm.role} onChange={(event) => onRegisterFieldChange("role", event.target.value)}>
                   <option value="boss">Jefe</option>
                   <option value="employee">Empleado</option>
                 </select>
@@ -948,85 +782,35 @@ function AuthScreen({
                 <>
                   <label>
                     Nombre de la empresa
-                    <input
-                      value={registerForm.companyName}
-                      onChange={(event) =>
-                        onRegisterFieldChange("companyName", event.target.value)
-                      }
-                    />
+                    <input value={registerForm.companyName} onChange={(event) => onRegisterFieldChange("companyName", event.target.value)} />
                   </label>
                   <label>
                     Cargo del jefe
-                    <input
-                      value={registerForm.position}
-                      onChange={(event) =>
-                        onRegisterFieldChange("position", event.target.value)
-                      }
-                    />
+                    <input value={registerForm.position} onChange={(event) => onRegisterFieldChange("position", event.target.value)} />
                   </label>
                 </>
               ) : null}
               <label>
-                {registerForm.role === "boss"
-                  ? "ID de empresa"
-                  : "ID de empresa entregado por tu jefe"}
-                <input
-                  value={registerForm.accessCode}
-                  onChange={(event) =>
-                    onRegisterFieldChange(
-                      "accessCode",
-                      sanitizeAccessCode(event.target.value),
-                    )
-                  }
-                />
+                {registerForm.role === "boss" ? "ID de empresa" : "ID de empresa entregado por tu jefe"}
+                <input value={registerForm.accessCode} onChange={(event) => onRegisterFieldChange("accessCode", sanitizeAccessCode(event.target.value))} />
               </label>
               <label className="checkbox-row">
-                <input
-                  checked={dataAuthorizationChecked}
-                  type="checkbox"
-                  onChange={(event) =>
-                    onAuthorizationChange(event.target.checked)
-                  }
-                />
-                <span>
-                  Autorizo el tratamiento de mis datos para operar la plataforma
-                  y sincronizar reportes, evidencias y contexto de empresa.
-                </span>
+                <input checked={dataAuthorizationChecked} type="checkbox" onChange={(event) => onAuthorizationChange(event.target.checked)} />
+                <span>Autorizo el tratamiento de mis datos para operar la plataforma y sincronizar reportes.</span>
               </label>
-              <button
-                className="primary-button"
-                disabled={loading}
-                type="submit"
-              >
+              <button className="primary-button" disabled={loading} type="submit">
                 {loading ? "Registrando..." : "Crear cuenta"}
               </button>
             </form>
           )}
-
           <StatusBanner status={status} />
         </article>
 
         <article className="glass-card info-stack">
-          <SectionHeading
-            eyebrow="Contexto actual"
-            title="Puntos clave del onboarding"
-            description="La capa web ya replica el flujo funcional de Flutter: alta local, vínculo con jefe y consumo del mismo backend productivo."
-          />
-          <QuoteCard
-            label="Mensaje SEO"
-            text="Software para control de personal, supervisión operativa y reportes diarios con evidencias en campo."
-          />
-          <QuoteCard
-            label="Subtitulo comercial"
-            text="Supervisa equipos, documenta novedades y ordena la operación diaria con una experiencia más clara para web y móvil."
-          />
-          <InfoCard
-            title="Empresa detectada"
-            message={
-              bossProfile.companyName ||
-              "Todavía no hay una empresa activa en el contexto local."
-            }
-          />
+          <SectionHeading eyebrow="Contexto actual" title="Onboarding asegurado" description="El acceso local fue reemplazado por autenticacion real contra backend con sesion validable." />
+          <QuoteCard label="Mensaje SEO" text="Software para control de personal, supervision operativa y reportes diarios con evidencias en campo." />
+          <QuoteCard label="Subtitulo comercial" text="Supervisa equipos, documenta novedades y ordena la operacion diaria con una experiencia clara en web y movil." />
+          <InfoCard title="Empresa detectada" message={bossProfile.companyName || "Todavia no hay una empresa activa en el contexto local."} />
         </article>
       </section>
     </>
@@ -1053,17 +837,15 @@ function BossScreen({
       <section className="hero-panel module-hero">
         <div className="hero-copy compact-copy">
           <span className="badge">Vista jefe</span>
-          <h2>Coordina tu equipo y revisa evidencia del día.</h2>
+          <h2>Coordina tu equipo y revisa evidencia del dia.</h2>
           <p>
             {bossProfile.companyName
               ? `Empresa activa: ${bossProfile.companyName}. Este panel centraliza empleados, canales directos y reportes diarios en una sola lectura.`
-              : "Configura empresa, ID de acceso y contacto para dejar listo el módulo operativo del equipo."}
+              : "Configura empresa, ID de acceso y contacto para dejar listo el modulo operativo del equipo."}
           </p>
           <div className="stat-grid three-cols mobile-stack">
             <article className="stat-card">
-              <strong>
-                {employeeCount}/{maxEmployeesPerBoss}
-              </strong>
+              <strong>{employeeCount}/{maxEmployeesPerBoss}</strong>
               <span>Empleados activos</span>
             </article>
             <article className="stat-card">
@@ -1078,25 +860,15 @@ function BossScreen({
         </div>
 
         <aside className="hero-card module-card">
-          <p className="hero-kicker">Sesión actual</p>
+          <p className="hero-kicker">Sesion actual</p>
           <h3>{activeUser.fullName}</h3>
           <p>Jefe vinculado al backend con ID {bossId || "pendiente"}.</p>
           <div className="action-stack">
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={onRefresh}
-              disabled={loading}
-            >
+            <button className="secondary-button" type="button" onClick={onRefresh} disabled={loading}>
               {loading ? "Refrescando..." : "Refrescar datos remotos"}
             </button>
             {bossProfile.phone ? (
-              <a
-                className="primary-button"
-                href={`https://wa.me/${bossProfile.phone.replace(/[^0-9]/g, "")}`}
-                target="_blank"
-                rel="noreferrer"
-              >
+              <a className="primary-button" href={`https://wa.me/${bossProfile.phone.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer">
                 Abrir WhatsApp
               </a>
             ) : null}
@@ -1107,80 +879,36 @@ function BossScreen({
       <section className="dashboard-grid boss-grid">
         <article className="glass-card">
           <form className="stack-form" onSubmit={onSaveProfile}>
-            <SectionHeading
-              eyebrow="Perfil del jefe"
-              title="Datos clave de empresa y acceso"
-              description="Mantén nombre visible, ID de empresa, canales de contacto y notas operativas listos para el equipo."
-            />
+            <SectionHeading eyebrow="Perfil del jefe" title="Datos clave de empresa y acceso" description="Manten nombre visible, ID de empresa, canales de contacto y notas operativas listos para el equipo." />
             <div className="two-column-grid">
               <label>
                 Nombre del jefe
-                <input
-                  value={bossProfile.name}
-                  onChange={(event) =>
-                    onBossFieldChange("name", event.target.value)
-                  }
-                />
+                <input value={bossProfile.name} onChange={(event) => onBossFieldChange("name", event.target.value)} />
               </label>
               <label>
                 Empresa
-                <input
-                  value={bossProfile.companyName}
-                  onChange={(event) =>
-                    onBossFieldChange("companyName", event.target.value)
-                  }
-                />
+                <input value={bossProfile.companyName} onChange={(event) => onBossFieldChange("companyName", event.target.value)} />
               </label>
               <label>
                 ID de empresa
-                <input
-                  value={bossProfile.accessCode}
-                  onChange={(event) =>
-                    onBossFieldChange(
-                      "accessCode",
-                      sanitizeAccessCode(event.target.value),
-                    )
-                  }
-                />
+                <input value={bossProfile.accessCode} onChange={(event) => onBossFieldChange("accessCode", sanitizeAccessCode(event.target.value))} />
               </label>
               <label>
                 Cargo
-                <input
-                  value={bossProfile.position}
-                  onChange={(event) =>
-                    onBossFieldChange("position", event.target.value)
-                  }
-                />
+                <input value={bossProfile.position} onChange={(event) => onBossFieldChange("position", event.target.value)} />
               </label>
               <label>
                 WhatsApp
-                <input
-                  value={bossProfile.phone}
-                  onChange={(event) =>
-                    onBossFieldChange("phone", event.target.value)
-                  }
-                />
+                <input value={bossProfile.phone} onChange={(event) => onBossFieldChange("phone", event.target.value)} />
               </label>
               <label>
                 Correo
-                <input
-                  type="email"
-                  value={bossProfile.email}
-                  onChange={(event) =>
-                    onBossFieldChange("email", event.target.value)
-                  }
-                />
+                <input type="email" value={bossProfile.email} onChange={(event) => onBossFieldChange("email", event.target.value)} />
               </label>
             </div>
             <label>
               Notas operativas
-              <textarea
-                rows="4"
-                value={bossProfile.notes}
-                onChange={(event) =>
-                  onBossFieldChange("notes", event.target.value)
-                }
-              />
+              <textarea rows="4" value={bossProfile.notes} onChange={(event) => onBossFieldChange("notes", event.target.value)} />
             </label>
             <button className="primary-button" disabled={loading} type="submit">
               {loading ? "Guardando..." : "Guardar perfil del jefe"}
@@ -1190,85 +918,43 @@ function BossScreen({
         </article>
 
         <article className="glass-card">
-          <SectionHeading
-            eyebrow="Capacidad del plan"
-            title="Límite operativo actual"
-            description="El plan FREE permite hasta cinco empleados vinculados por jefe en este flujo actual."
-          />
-          <ProgressPanel
-            current={employeeCount}
-            limit={maxEmployeesPerBoss}
-            alert={limitReached}
-          />
-          <InfoCard
-            title={limitReached ? "Límite alcanzado" : "Todavía hay capacidad"}
-            message={
-              limitReached
-                ? "Llegaste al límite de cinco empleados. Para ampliar el equipo toca cambiar de plan."
-                : "Aún puedes seguir registrando empleados y recibir sus reportes diarios."
-            }
-          />
+          <SectionHeading eyebrow="Capacidad del plan" title="Limite operativo actual" description="El plan FREE permite hasta cinco empleados vinculados por jefe en este flujo actual." />
+          <ProgressPanel current={employeeCount} limit={maxEmployeesPerBoss} alert={limitReached} />
+          <InfoCard title={limitReached ? "Limite alcanzado" : "Todavia hay capacidad"} message={limitReached ? "Llegaste al limite de cinco empleados. Para ampliar el equipo toca cambiar de plan." : "Aun puedes seguir registrando empleados y recibir sus reportes diarios."} />
         </article>
 
         <article className="glass-card wide-panel">
-          <SectionHeading
-            eyebrow="Equipo registrado"
-            title="Empleados vinculados al jefe"
-            description="Cada empleado queda asociado por empresa y aparece aquí con sus datos principales."
-          />
+          <SectionHeading eyebrow="Equipo registrado" title="Empleados vinculados al jefe" description="Cada empleado queda asociado por empresa y aparece aqui con sus datos principales." />
           {employees.length ? (
             <div className="list-stack">
               {employees.map((employee) => (
-                <article
-                  className="list-card"
-                  key={`${employee.id}-${employee.id_number}`}
-                >
-                  <div className="avatar-pill">
-                    {String(employee.full_name || "?")
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
+                <article className="list-card" key={`${employee.id}-${employee.id_number}`}>
+                  <div className="avatar-pill">{String(employee.full_name || "?").charAt(0).toUpperCase()}</div>
                   <div>
                     <strong>{employee.full_name}</strong>
-                    <p>
-                      ID: {employee.id_number} · Tel:{" "}
-                      {employee.phone || "Sin dato"} ·{" "}
-                      {employee.email || "Sin correo"}
-                    </p>
+                    <p>ID: {employee.id_number}  Tel: {employee.phone || "Sin dato"}  {employee.email || "Sin correo"}</p>
                   </div>
                 </article>
               ))}
             </div>
           ) : (
-            <EmptyState
-              title="Sin empleados todavía"
-              message="Cuando un empleado envíe su primer reporte, quedará visible aquí con sus datos principales."
-            />
+            <EmptyState title="Sin empleados todavia" message="Cuando un empleado envie su primer reporte, quedara visible aqui con sus datos principales." />
           )}
         </article>
 
         <article className="glass-card wide-panel">
-          <SectionHeading
-            eyebrow="Muro de reportes"
-            title="Evidencia del día"
-            description="Observaciones, fecha y fotografías subidas por empleados dentro de la misma empresa."
-          />
+          <SectionHeading eyebrow="Muro de reportes" title="Evidencia del dia" description="Observaciones, fecha y fotografias subidas por empleados dentro de la misma empresa." />
           {reports.length ? (
             <div className="report-grid">
               {reports.map((report) => (
                 <article className="report-card" key={report.id}>
                   {report.images?.[0] ? (
-                    <img
-                      src={report.images[0]}
-                      alt={`Evidencia de ${report.employee_name}`}
-                    />
+                    <img src={report.images[0]} alt={`Evidencia de ${report.employee_name}`} />
                   ) : (
                     <div className="report-image empty">Sin foto</div>
                   )}
                   <div className="report-copy">
-                    <strong>
-                      {report.employee_name} ({report.employee_id})
-                    </strong>
+                    <strong>{report.employee_name} ({report.employee_id})</strong>
                     <span>{formatDate(report.created_at)}</span>
                     <p>{report.observations}</p>
                   </div>
@@ -1276,10 +962,7 @@ function BossScreen({
               ))}
             </div>
           ) : (
-            <EmptyState
-              title="Sin reportes aún"
-              message="Cuando los empleados suban observaciones y evidencia, aparecerán aquí en orden cronológico."
-            />
+            <EmptyState title="Sin reportes aun" message="Cuando los empleados suban observaciones y evidencia, apareceran aqui en orden cronologico." />
           )}
         </article>
       </section>
@@ -1311,14 +994,12 @@ function EmployeeScreen({
           <h2>Carga tu avance diario en pocos pasos.</h2>
           <p>
             {bossProfile.companyName
-              ? `Empresa vinculada: ${bossProfile.companyName}. El flujo deja listo nombre, identificación, observaciones y evidencia en una sola entrega.`
-              : "La empresa se define desde el módulo del jefe para completar el contexto operativo."}
+              ? `Empresa vinculada: ${bossProfile.companyName}. El flujo deja listo nombre, identificacion, observaciones y evidencia en una sola entrega.`
+              : "La empresa se define desde el modulo del jefe para completar el contexto operativo."}
           </p>
           <div className="stat-grid three-cols mobile-stack">
             <article className="stat-card">
-              <strong>
-                {bossProfile.companyName ? "Vinculada" : "Pendiente"}
-              </strong>
+              <strong>{bossProfile.companyName ? "Vinculada" : "Pendiente"}</strong>
               <span>Empresa</span>
             </article>
             <article className="stat-card">
@@ -1327,25 +1008,16 @@ function EmployeeScreen({
             </article>
             <article className="stat-card">
               <strong>{loading ? "En curso" : "Disponible"}</strong>
-              <span>Sincronización</span>
+              <span>Sincronizacion</span>
             </article>
           </div>
         </div>
 
         <aside className="hero-card module-card">
-          <p className="hero-kicker">Sesión actual</p>
+          <p className="hero-kicker">Sesion actual</p>
           <h3>{activeUser.fullName}</h3>
-          <p>
-            {bossProfile.companyName
-              ? `Trabajando bajo ${bossProfile.companyName}.`
-              : "Todavía no hay empresa activa en el contexto local."}
-          </p>
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={onRefresh}
-            disabled={loading}
-          >
+          <p>{bossProfile.companyName ? `Trabajando bajo ${bossProfile.companyName}.` : "Todavia no hay empresa activa en el contexto local."}</p>
+          <button className="secondary-button" type="button" onClick={onRefresh} disabled={loading}>
             {loading ? "Refrescando..." : "Refrescar datos remotos"}
           </button>
         </aside>
@@ -1354,80 +1026,34 @@ function EmployeeScreen({
       <section className="dashboard-grid employee-grid">
         <article className="glass-card wide-panel">
           <form className="stack-form" onSubmit={onSubmit}>
-            <SectionHeading
-              eyebrow="Formulario de empleado"
-              title="Enviar reporte con evidencia"
-              description="El empleado actualiza sus datos básicos, deja observaciones del día y adjunta fotografías en un solo envío."
-            />
-            <InfoCard
-              title="Contexto actual"
-              message={
-                bossProfile.companyName
-                  ? `Empresa asignada: ${bossProfile.companyName}. Registros activos para el jefe: ${employees.length}/${maxEmployeesPerBoss}.`
-                  : "Primero debe existir un jefe registrado para completar la sincronización remota."
-              }
-            />
+            <SectionHeading eyebrow="Formulario de empleado" title="Enviar reporte con evidencia" description="El empleado actualiza sus datos basicos, deja observaciones del dia y adjunta fotografias en un solo envio." />
+            <InfoCard title="Contexto actual" message={bossProfile.companyName ? `Empresa asignada: ${bossProfile.companyName}. Registros activos para el jefe: ${employees.length}/${maxEmployeesPerBoss}.` : "Primero debe existir un jefe registrado para completar la sincronizacion remota."} />
             <div className="two-column-grid">
               <label>
                 Nombre completo
-                <input
-                  value={employeeForm.fullName}
-                  onChange={(event) =>
-                    onEmployeeFieldChange("fullName", event.target.value)
-                  }
-                />
+                <input value={employeeForm.fullName} onChange={(event) => onEmployeeFieldChange("fullName", event.target.value)} />
               </label>
               <label>
                 Documento o ID
-                <input
-                  value={employeeForm.idNumber}
-                  onChange={(event) =>
-                    onEmployeeFieldChange("idNumber", event.target.value)
-                  }
-                />
+                <input value={employeeForm.idNumber} onChange={(event) => onEmployeeFieldChange("idNumber", event.target.value)} />
               </label>
               <label>
-                Teléfono
-                <input
-                  value={employeeForm.phone}
-                  onChange={(event) =>
-                    onEmployeeFieldChange("phone", event.target.value)
-                  }
-                />
+                Telefono
+                <input value={employeeForm.phone} onChange={(event) => onEmployeeFieldChange("phone", event.target.value)} />
               </label>
               <label>
                 Correo
-                <input
-                  type="email"
-                  value={employeeForm.email}
-                  onChange={(event) =>
-                    onEmployeeFieldChange("email", event.target.value)
-                  }
-                />
+                <input type="email" value={employeeForm.email} onChange={(event) => onEmployeeFieldChange("email", event.target.value)} />
               </label>
             </div>
             <label>
-              Observaciones del día
-              <textarea
-                rows="5"
-                value={employeeForm.observations}
-                onChange={(event) =>
-                  onEmployeeFieldChange("observations", event.target.value)
-                }
-              />
+              Observaciones del dia
+              <textarea rows="5" value={employeeForm.observations} onChange={(event) => onEmployeeFieldChange("observations", event.target.value)} />
             </label>
             <label className="file-dropzone">
-              <span>Adjuntar imágenes</span>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(event) => onFilesChange(event.target.files)}
-              />
-              <small>
-                Hasta 5 imágenes por envío. Usa fotos claras del avance o
-                evidencia.
-              </small>
+              <span>Adjuntar imagenes</span>
+              <input type="file" accept="image/*" multiple onChange={(event) => onFilesChange(event.target.files)} />
+              <small>Hasta 5 imagenes por envio. Usa fotos claras del avance o evidencia.</small>
             </label>
 
             {imagePreviews.length ? (
@@ -1441,25 +1067,15 @@ function EmployeeScreen({
               </div>
             ) : null}
 
-            <button
-              className="primary-button"
-              disabled={submitting}
-              type="submit"
-            >
-              {submitting
-                ? "Enviando reporte..."
-                : "Enviar reporte y evidencia"}
+            <button className="primary-button" disabled={submitting} type="submit">
+              {submitting ? "Enviando reporte..." : "Enviar reporte y evidencia"}
             </button>
           </form>
           <StatusBanner status={status} />
         </article>
 
         <article className="glass-card">
-          <SectionHeading
-            eyebrow="Últimos reportes"
-            title="Historial visible del jefe"
-            description="La lista muestra el mismo backend del panel del jefe, útil para verificar sincronización en tiempo real."
-          />
+          <SectionHeading eyebrow="Ultimos reportes" title="Historial visible del jefe" description="La lista muestra el mismo backend del panel del jefe, util para verificar sincronizacion en tiempo real." />
           {reports.length ? (
             <div className="mini-list-stack">
               {reports.slice(0, 5).map((report) => (
@@ -1471,10 +1087,7 @@ function EmployeeScreen({
               ))}
             </div>
           ) : (
-            <EmptyState
-              title="Sin reportes sincronizados"
-              message="Cuando envíes el primer reporte con evidencia, aparecerá aquí y en el panel del jefe."
-            />
+            <EmptyState title="Sin reportes sincronizados" message="Cuando envies el primer reporte con evidencia, aparecera aqui y en el panel del jefe." />
           )}
         </article>
       </section>
@@ -1533,16 +1146,11 @@ function ProgressPanel({ current, limit, alert }) {
   return (
     <div className="progress-panel">
       <div className="progress-copy">
-        <strong>
-          {current}/{limit} empleados
-        </strong>
+        <strong>{current}/{limit} empleados</strong>
         <span>{alert ? "Capacidad agotada" : "Capacidad disponible"}</span>
       </div>
       <div className="progress-track">
-        <div
-          className={alert ? "progress-fill alert" : "progress-fill"}
-          style={{ width: `${percentage}%` }}
-        />
+        <div className={alert ? "progress-fill alert" : "progress-fill"} style={{ width: `${percentage}%` }} />
       </div>
     </div>
   );

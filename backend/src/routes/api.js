@@ -15,8 +15,14 @@ const {
 } = require("../controllers/reportController");
 const { uploadReportImages } = require("../controllers/uploadController");
 const authApiKey = require("../middlewares/authApiKey");
+const authSession = require("../middlewares/authSession");
 const { uploadImages } = require("../middlewares/upload");
 const validateRequest = require("../middlewares/validateRequest");
+const {
+  register,
+  login,
+  getSession,
+} = require("../controllers/authController");
 const {
   createBossValidator,
   bossIdParamValidator,
@@ -24,6 +30,10 @@ const {
 } = require("../validators/bossValidators");
 const { createEmployeeValidator } = require("../validators/employeeValidators");
 const { createReportValidator } = require("../validators/reportValidators");
+const {
+  registerValidator,
+  loginValidator,
+} = require("../validators/authValidators");
 
 const router = express.Router();
 
@@ -32,6 +42,10 @@ router.get("/health", (_req, res) => {
 });
 
 router.use(authApiKey);
+
+router.post("/auth/register", registerValidator, validateRequest, register);
+router.post("/auth/login", loginValidator, validateRequest, login);
+router.get("/auth/session", authSession, getSession);
 
 router.post("/bosses", createBossValidator, validateRequest, createBoss);
 router.put(

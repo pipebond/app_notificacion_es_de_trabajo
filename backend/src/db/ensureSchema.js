@@ -169,6 +169,26 @@ async function ensureSchema() {
     ) ENGINE=InnoDB`,
   );
 
+  await pool.query(
+    `CREATE TABLE IF NOT EXISTS app_users (
+      id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      full_name VARCHAR(120) NOT NULL,
+      email VARCHAR(180) NOT NULL,
+      password_hash VARCHAR(255) NOT NULL,
+      role ENUM('boss', 'employee') NOT NULL,
+      boss_id INT UNSIGNED NULL,
+      company_name VARCHAR(180) NULL,
+      data_authorized TINYINT(1) NOT NULL DEFAULT 0,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_app_user_email_role (email, role),
+      CONSTRAINT fk_app_user_boss
+        FOREIGN KEY (boss_id)
+        REFERENCES bosses(id)
+        ON UPDATE CASCADE
+        ON DELETE SET NULL
+    ) ENGINE=InnoDB`,
+  );
+
   await ensureBossColumns(databaseName);
   await ensureFreePlanTrigger(databaseName);
 }
