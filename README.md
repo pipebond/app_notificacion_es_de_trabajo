@@ -1,6 +1,12 @@
 # App Notificacion Es De Trabajo
 
-Base Flutter para construir una app movil y publicarla en Play Store y App Store.
+Stack actual:
+
+- Flutter para aplicaciones móviles.
+- React + Vite para la experiencia web.
+- Node.js + Express + MySQL para backend.
+
+La identidad visual de ReportaPro se unificó para web y móvil con una paleta azul cristalino, azul oscuro y blanco suave.
 
 ## Requisitos
 
@@ -20,9 +26,11 @@ C:/src/flutter/bin/flutter.bat pub get
 C:/src/flutter/bin/flutter.bat run
 ```
 
-## Estructura inicial
+## Estructura principal
 
-- lib/main.dart: pantalla inicial y tema base
+- lib/main.dart: app Flutter orientada a móvil
+- webapp/: frontend web en React + Vite
+- backend/: API Express + MySQL
 
 ## Roadmap recomendado
 
@@ -95,17 +103,46 @@ Healthcheck esperado del backend:
 
 ### 3. Frontend web en Vercel
 
-- Este repo ya incluye `vercel.json` y `scripts/vercel-build.sh`.
+- Este repo ya incluye `vercel.json` apuntando a `webapp/`.
 - En Vercel, importa el repositorio.
-- Variables de entorno requeridas para build:
-  - `API_BASE_URL` (ejemplo: `https://tu-backend.onrender.com/api`)
-  - `API_KEY` (misma del backend)
+- Variables de entorno requeridas para la web React:
+  - `VITE_API_BASE_URL` (ejemplo: `https://tu-backend.onrender.com/api`)
+  - `VITE_API_KEY` (misma del backend)
 
-El build de Vercel genera Flutter web con `dart-define`.
+Comandos locales de la web:
+
+```powershell
+cd webapp
+npm install
+npm run dev
+```
+
+Build local de la web:
+
+```powershell
+cd webapp
+npm run build
+```
+
+La web incluye:
+
+- branding con el logo oficial
+- metadatos SEO
+- Vercel Analytics
+- `robots.txt`, `sitemap.xml` y `security.txt`
+- headers de seguridad en `vercel.json`
 
 ### 4. Orden recomendado
 
 1. Publicar backend en Render y copiar URL publica.
-2. Configurar `API_BASE_URL` en Vercel.
-3. Publicar frontend en Vercel.
+2. Configurar `VITE_API_BASE_URL` y `VITE_API_KEY` en Vercel.
+3. Publicar frontend React en Vercel.
 4. Actualizar `CORS_ORIGINS` en Render con la URL final de Vercel.
+
+## Variables para Flutter móvil
+
+Para builds móviles, pasa las variables sensibles con `dart-define`:
+
+```powershell
+C:/src/flutter/bin/flutter.bat run --dart-define=API_BASE_URL=https://tu-backend.onrender.com/api --dart-define=API_KEY=TU_API_KEY
+```

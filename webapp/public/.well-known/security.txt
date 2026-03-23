@@ -1,0 +1,4 @@
+Contact: https://github.com/pipebond/app_notificacion_es_de_trabajo/issues
+Expires: 2027-03-22T00:00:00.000Z
+Preferred-Languages: es, en
+Canonical: https://appnotificacionesdetrabajo.vercel.app/.well-known/security.txt

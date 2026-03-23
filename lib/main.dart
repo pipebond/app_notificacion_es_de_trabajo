@@ -14,29 +14,72 @@ void main() {
   runApp(NotificacionTrabajoApp());
 }
 
+class AppBrand {
+  static const Color crystalBlue = Color(0xFF67C6FF);
+  static const Color midnightBlue = Color(0xFF0D3B66);
+  static const Color creamBlue = Color(0xFFEAF4FF);
+  static const Color softWhite = Color(0xFFF8FBFF);
+  static const Color ink = Color(0xFF10273F);
+  static const Color muted = Color(0xFF5C738C);
+  static const Color outline = Color(0xFFD3E7F8);
+  static const Color cardTint = Color(0xFFF3F9FF);
+  static const String logoAsset =
+      'assets/branding/reportapro_playstore_icon_512.png';
+}
+
 class NotificacionTrabajoApp extends StatelessWidget {
   NotificacionTrabajoApp({super.key});
 
   final AppState appState = AppState(
     api: BackendApi(
       baseUrl: const String.fromEnvironment('API_BASE_URL', defaultValue: ''),
-      apiKey: const String.fromEnvironment(
-        'API_KEY',
-        defaultValue:
-            '1bgmrXdlBfx9KzWeiJFc6L4TEQu3HDjGNqM8YhPsC0S5tOU2pwAonva7ZkIVRy',
-      ),
+      apiKey: const String.fromEnvironment('API_KEY', defaultValue: ''),
     ),
   );
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFFFF5A36),
+      seedColor: AppBrand.midnightBlue,
       brightness: Brightness.light,
-      primary: const Color(0xFFFF5A36),
-      secondary: const Color(0xFF00A896),
-      tertiary: const Color(0xFFFFBE0B),
-      surface: const Color(0xFFFFFCF6),
+      primary: AppBrand.midnightBlue,
+      secondary: AppBrand.crystalBlue,
+      tertiary: const Color(0xFFA8D8FF),
+      surface: AppBrand.softWhite,
+    );
+
+    final baseTextTheme = GoogleFonts.manropeTextTheme();
+    final textTheme = baseTextTheme.copyWith(
+      displayLarge: GoogleFonts.spaceGrotesk(
+        fontSize: 42,
+        fontWeight: FontWeight.w700,
+        color: AppBrand.ink,
+      ),
+      displayMedium: GoogleFonts.spaceGrotesk(
+        fontSize: 34,
+        fontWeight: FontWeight.w700,
+        color: AppBrand.ink,
+      ),
+      headlineMedium: GoogleFonts.spaceGrotesk(
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        color: AppBrand.ink,
+      ),
+      titleLarge: GoogleFonts.spaceGrotesk(
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        color: AppBrand.ink,
+      ),
+      bodyLarge: GoogleFonts.manrope(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: AppBrand.ink,
+      ),
+      bodyMedium: GoogleFonts.manrope(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: AppBrand.muted,
+      ),
     );
 
     return AppStateScope(
@@ -47,9 +90,9 @@ class NotificacionTrabajoApp extends StatelessWidget {
         theme: ThemeData(
           colorScheme: colorScheme,
           useMaterial3: true,
-          scaffoldBackgroundColor: const Color(0xFFFFF4EB),
-          textTheme: GoogleFonts.soraTextTheme(),
-          dividerColor: const Color(0xFFFFDCC8),
+          scaffoldBackgroundColor: AppBrand.softWhite,
+          textTheme: textTheme,
+          dividerColor: AppBrand.outline,
           appBarTheme: const AppBarTheme(
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -61,24 +104,24 @@ class NotificacionTrabajoApp extends StatelessWidget {
             elevation: 0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
-              side: const BorderSide(color: Color(0xFFFFE1D4), width: 1),
+              side: const BorderSide(color: AppBrand.outline, width: 1),
             ),
           ),
           inputDecorationTheme: InputDecorationTheme(
             filled: true,
-            fillColor: const Color(0xFFFFF8F0),
+            fillColor: AppBrand.cardTint,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFFFFD8C2)),
+              borderSide: const BorderSide(color: AppBrand.outline),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFFFFD8C2)),
+              borderSide: const BorderSide(color: AppBrand.outline),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: const BorderSide(
-                color: Color(0xFFFF5A36),
+                color: AppBrand.crystalBlue,
                 width: 1.6,
               ),
             ),
@@ -89,7 +132,7 @@ class NotificacionTrabajoApp extends StatelessWidget {
           ),
           filledButtonTheme: FilledButtonThemeData(
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFFF5A36),
+              backgroundColor: AppBrand.midnightBlue,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -99,8 +142,8 @@ class NotificacionTrabajoApp extends StatelessWidget {
           ),
           outlinedButtonTheme: OutlinedButtonThemeData(
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF28313B),
-              side: const BorderSide(color: Color(0xFFFFC7AF)),
+              foregroundColor: AppBrand.midnightBlue,
+              side: const BorderSide(color: AppBrand.outline),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
@@ -108,9 +151,9 @@ class NotificacionTrabajoApp extends StatelessWidget {
             ),
           ),
           chipTheme: ChipThemeData(
-            backgroundColor: const Color(0xFFFFE9DD),
-            labelStyle: GoogleFonts.sora(
-              color: const Color(0xFF7A2F17),
+            backgroundColor: AppBrand.creamBlue,
+            labelStyle: GoogleFonts.manrope(
+              color: AppBrand.midnightBlue,
               fontWeight: FontWeight.w600,
             ),
             side: BorderSide.none,
@@ -119,8 +162,8 @@ class NotificacionTrabajoApp extends StatelessWidget {
             ),
           ),
           snackBarTheme: SnackBarThemeData(
-            backgroundColor: const Color(0xFF28313B),
-            contentTextStyle: GoogleFonts.sora(
+            backgroundColor: AppBrand.midnightBlue,
+            contentTextStyle: GoogleFonts.manrope(
               color: Colors.white,
               fontWeight: FontWeight.w500,
             ),
@@ -775,7 +818,7 @@ class AppBackdrop extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFFFFF0E1), Color(0xFFE6FFF9)],
+                colors: [AppBrand.softWhite, AppBrand.creamBlue],
               ),
             ),
           ),
@@ -785,7 +828,7 @@ class AppBackdrop extends StatelessWidget {
           right: -40,
           child: _GlowCircle(
             size: 180,
-            color: const Color(0xFFFFBE0B).withValues(alpha: 0.22),
+            color: AppBrand.crystalBlue.withValues(alpha: 0.18),
           ),
         ),
         Positioned(
@@ -793,7 +836,7 @@ class AppBackdrop extends StatelessWidget {
           left: -50,
           child: _GlowCircle(
             size: 160,
-            color: const Color(0xFFFF5A36).withValues(alpha: 0.20),
+            color: AppBrand.midnightBlue.withValues(alpha: 0.10),
           ),
         ),
         Positioned(
@@ -801,7 +844,7 @@ class AppBackdrop extends StatelessWidget {
           left: 20,
           child: _GlowCircle(
             size: 220,
-            color: const Color(0xFF00A896).withValues(alpha: 0.18),
+            color: AppBrand.creamBlue.withValues(alpha: 0.95),
           ),
         ),
         Positioned(
@@ -809,7 +852,7 @@ class AppBackdrop extends StatelessWidget {
           right: 24,
           child: _GlowCircle(
             size: 120,
-            color: const Color(0xFF3A86FF).withValues(alpha: 0.10),
+            color: AppBrand.crystalBlue.withValues(alpha: 0.12),
           ),
         ),
         SafeArea(child: child),
@@ -867,6 +910,49 @@ class ResponsiveContent extends StatelessWidget {
           ),
           child: child,
         ),
+      ),
+    );
+  }
+}
+
+class BrandSignature extends StatelessWidget {
+  const BrandSignature({super.key, required this.title, required this.caption});
+
+  final String title;
+  final String caption;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppBrand.outline),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Image.asset(
+              AppBrand.logoAsset,
+              width: 54,
+              height: 54,
+              fit: BoxFit.cover,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 4),
+                Text(caption, style: Theme.of(context).textTheme.bodyMedium),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -973,7 +1059,7 @@ class StatPill extends StatelessWidget {
     required this.label,
     required this.value,
     this.icon,
-    this.tint = const Color(0xFFFFF1E7),
+    this.tint = AppBrand.creamBlue,
   });
 
   final String label;
@@ -993,7 +1079,7 @@ class StatPill extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 18, color: const Color(0xFF7A2F17)),
+            Icon(icon, size: 18, color: AppBrand.midnightBlue),
             const SizedBox(width: 8),
           ],
           Column(
@@ -1003,7 +1089,7 @@ class StatPill extends StatelessWidget {
               Text(
                 value,
                 style: const TextStyle(
-                  color: Color(0xFF1F2328),
+                  color: AppBrand.ink,
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                 ),
@@ -1011,7 +1097,7 @@ class StatPill extends StatelessWidget {
               Text(
                 label,
                 style: const TextStyle(
-                  color: Color(0xFF6B7280),
+                  color: AppBrand.muted,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1061,12 +1147,8 @@ class SectionCard extends StatelessWidget {
                         const SizedBox(height: 6),
                         Text(
                           subtitle!,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.bodyMedium?.copyWith(
-                            color: const Color(0xFF5E6773),
-                            height: 1.4,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: AppBrand.muted, height: 1.4),
                         ),
                       ],
                     ],
@@ -1102,17 +1184,17 @@ class EmptyStateCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8F0),
+        color: AppBrand.cardTint,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFFFE1D4)),
+        border: Border.all(color: AppBrand.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
             radius: 22,
-            backgroundColor: const Color(0xFFFFE4D6),
-            child: Icon(icon, color: const Color(0xFFFF5A36)),
+            backgroundColor: AppBrand.creamBlue,
+            child: Icon(icon, color: AppBrand.midnightBlue),
           ),
           const SizedBox(height: 14),
           Text(
@@ -1122,7 +1204,7 @@ class EmptyStateCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             message,
-            style: const TextStyle(color: Color(0xFF5E6773), height: 1.5),
+            style: const TextStyle(color: AppBrand.muted, height: 1.5),
           ),
         ],
       ),
@@ -1546,23 +1628,26 @@ class _HomePageState extends State<HomePage> {
             maxWidth: 920,
             child: ListView(
               children: [
+                const BrandSignature(
+                  title: 'ReportaPro para control diario de personal',
+                  caption:
+                      'Una identidad mas clara para supervisar equipos, capturar evidencia y ordenar reportes de campo desde el primer acceso.',
+                ),
+                const SizedBox(height: 16),
                 HeroBanner(
-                  badge: 'Lista para una release mas pro',
-                  title: 'Controla reportes, equipos y evidencia diaria',
+                  badge: 'Nueva identidad web y móvil',
+                  title:
+                      'Controla personal, reportes y evidencia con una experiencia mas clara',
                   subtitle:
-                      'La app ya tiene separacion por rol. Este paso la deja con una presencia mas limpia y confiable para publicar.',
-                  colors: const [Color(0xFFFF5A36), Color(0xFFFF8A00)],
-                  trailing: Container(
-                    width: 86,
-                    height: 86,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: const Icon(
-                      Icons.verified_user_rounded,
-                      color: Colors.white,
-                      size: 42,
+                      'ReportaPro une control diario de personal, seguimiento operativo y reportes de campo con una imagen mas profesional para web y móvil.',
+                  colors: const [AppBrand.midnightBlue, Color(0xFF2D75B6)],
+                  trailing: ClipRRect(
+                    borderRadius: BorderRadius.circular(24),
+                    child: Image.asset(
+                      AppBrand.logoAsset,
+                      width: 86,
+                      height: 86,
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
@@ -1578,13 +1663,13 @@ class _HomePageState extends State<HomePage> {
                       label: 'Registro local',
                       value: 'Onboarding',
                       icon: Icons.person_add_alt_1_rounded,
-                      tint: Color(0xFFE7FFF8),
+                      tint: AppBrand.cardTint,
                     ),
                     StatPill(
                       label: 'Sincronizacion',
                       value: 'Backend listo',
                       icon: Icons.cloud_done_rounded,
-                      tint: Color(0xFFEAF1FF),
+                      tint: AppBrand.creamBlue,
                     ),
                   ],
                 ),
@@ -1929,9 +2014,9 @@ class _BossModuleScreenState extends State<BossModuleScreen> {
               title: 'Coordina tu equipo y revisa evidencia del dia',
               subtitle:
                   appState.bossProfile.companyName.isNotEmpty
-                      ? 'Empresa activa: ${appState.bossProfile.companyName}. Mantener este panel limpio y claro ayuda mucho para una primera impresion de tienda.'
-                      : 'Configura tu empresa para personalizar el modulo del empleado y dejar el flujo listo para operacion.',
-              colors: const [Color(0xFF00A896), Color(0xFF02C39A)],
+                      ? 'Empresa activa: ${appState.bossProfile.companyName}. Este panel mantiene control de personal, evidencia y reportes diarios en una sola vista clara.'
+                      : 'Configura tu empresa para dejar listo el acceso del equipo y una supervision mas ordenada.',
+              colors: const [AppBrand.midnightBlue, AppBrand.crystalBlue],
               trailing: const Icon(
                 Icons.admin_panel_settings_rounded,
                 color: Colors.white,
@@ -1945,13 +2030,13 @@ class _BossModuleScreenState extends State<BossModuleScreen> {
                   label: 'Empleados activos',
                   value: '$employeeCount/${AppState.maxEmployeesPerBoss}',
                   icon: Icons.groups_2_rounded,
-                  tint: const Color(0xFFE7FFF8),
+                  tint: AppBrand.cardTint,
                 ),
                 StatPill(
                   label: 'Reportes cargados',
                   value: '${appState.reports.length}',
                   icon: Icons.assignment_turned_in_rounded,
-                  tint: const Color(0xFFEAF1FF),
+                  tint: AppBrand.creamBlue,
                 ),
                 StatPill(
                   label: 'Canal directo',
@@ -2363,9 +2448,9 @@ class _EmployeeModuleScreenState extends State<EmployeeModuleScreen> {
               title: 'Carga tu avance diario en pocos pasos',
               subtitle:
                   appState.bossProfile.companyName.isNotEmpty
-                      ? 'Empresa vinculada: ${appState.bossProfile.companyName}. La idea aqui es que el formulario se sienta ligero y claro.'
-                      : 'La empresa se configurara desde el modulo del jefe para completar la experiencia.',
-              colors: const [Color(0xFF3A86FF), Color(0xFF8338EC)],
+                      ? 'Empresa vinculada: ${appState.bossProfile.companyName}. El flujo queda ligero para que cada reporte diario se cargue rapido y con menos error.'
+                      : 'La empresa se configurara desde el modulo del jefe para completar una experiencia consistente.',
+              colors: const [Color(0xFF2B6CA3), AppBrand.crystalBlue],
               trailing: const Icon(
                 Icons.construction_rounded,
                 color: Colors.white,
@@ -2387,13 +2472,13 @@ class _EmployeeModuleScreenState extends State<EmployeeModuleScreen> {
                   label: 'Fotos',
                   value: '${selectedImages.length} cargadas',
                   icon: Icons.photo_library_rounded,
-                  tint: const Color(0xFFEAF1FF),
+                  tint: AppBrand.creamBlue,
                 ),
                 StatPill(
                   label: 'Sincronizacion',
                   value: appState.loading ? 'En curso' : 'Disponible',
                   icon: Icons.cloud_upload_rounded,
-                  tint: const Color(0xFFE7FFF8),
+                  tint: AppBrand.cardTint,
                 ),
               ],
             ),

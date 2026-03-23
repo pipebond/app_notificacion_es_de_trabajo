@@ -7,6 +7,7 @@ const securityMiddlewares = require("./middlewares/security");
 const app = express();
 
 app.disable("x-powered-by");
+app.set("trust proxy", 1);
 
 securityMiddlewares().forEach((middleware) => app.use(middleware));
 

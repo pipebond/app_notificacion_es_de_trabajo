@@ -31,13 +31,15 @@ const corsMiddleware = cors({
 
     return callback(new Error("Origen CORS no permitido"));
   },
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-  allowedHeaders: ["Content-Type", "x-api-key"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "x-api-key", "X-Requested-With"],
+  credentials: false,
+  optionsSuccessStatus: 204,
 });
 
 const apiLimiter = rateLimit({
   windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000),
-  max: Number(process.env.RATE_LIMIT_MAX || 200),
+  max: Number(process.env.RATE_LIMIT_MAX || 120),
   standardHeaders: true,
   legacyHeaders: false,
   message: { message: "Demasiadas solicitudes. Intenta mas tarde." },
@@ -48,6 +50,15 @@ function securityMiddlewares() {
     helmet({
       contentSecurityPolicy: false,
       crossOriginResourcePolicy: { policy: "cross-origin" },
+      frameguard: { action: "deny" },
+      referrerPolicy: { policy: "no-referrer" },
+      hsts: isProduction
+        ? {
+            maxAge: 31536000,
+            includeSubDomains: true,
+            preload: true,
+          }
+        : false,
     }),
     corsMiddleware,
     hpp(),
