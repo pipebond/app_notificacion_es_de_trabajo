@@ -5,6 +5,7 @@ const pool = require("./db/pool");
 const ensureSchema = require("./db/ensureSchema");
 
 const PORT = Number(process.env.PORT || 4000);
+const HOST = process.env.HOST || "0.0.0.0";
 
 function validateEnvironment() {
   if (!process.env.JWT_SECRET) {
@@ -53,8 +54,8 @@ async function bootstrap() {
     validateEnvironment();
     await ensureSchema();
     await pool.query("SELECT 1");
-    app.listen(PORT, () => {
-      console.log(`Backend escuchando en http://localhost:${PORT}`);
+    app.listen(PORT, HOST, () => {
+      console.log(`Backend escuchando en http://${HOST}:${PORT}`);
     });
   } catch (error) {
     console.error(
